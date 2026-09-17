@@ -153,6 +153,11 @@ textarea.f{width:100%;min-height:80px;font-family:var(--mono);font-size:12px;bor
 .rules li{margin-bottom:6px}
 .switch{display:flex;align-items:center;gap:10px;font-weight:700}
 .switch input{width:22px;height:22px}
+.scan{position:fixed;inset:0;background:#000;z-index:20;display:flex;align-items:center;justify-content:center;padding:16px}
+.scan-in{width:100%;max-width:480px}
+.scan video{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:12px;background:#111}
+.scan-msg{color:#fff;text-align:center;margin:12px 0;font-weight:600}
+.scan .btn{background:#fff;color:#111;border-color:#fff}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));background:var(--text);color:var(--bg);padding:10px 16px;border-radius:999px;font-weight:600;font-size:14px;z-index:9;opacity:0;transition:opacity .2s}
 .toast.on{opacity:1}
 @media (prefers-reduced-motion:reduce){.toast{transition:none}}
@@ -173,6 +178,7 @@ textarea.f{width:100%;min-height:80px;font-family:var(--mono);font-size:12px;bor
 <script src="courses.js"></script>
 <script src="engine.js"></script>
 <script src="qrcode.min.js"></script>
+<script src="jsqr.min.js"></script>
 <script>
 (function(){
 'use strict';
@@ -379,9 +385,13 @@ function gridHtml(C,r,g,cg,course,all,tot){
 function sel(key,hole,cur,all){ return '<select data-act="gsel" data-k="'+key+'" data-h="'+hole+'"><option value="">–</option>'+all.map(function(p){return '<option value="'+p+'"'+(cur===p?' selected':'')+'>'+esc(pname(p))+'</option>';}).join('')+'</select>'; }
 
 /* ----- Hand in ----- */
+function receiveHtml(){
+  return '<div class="card"><h2>Receive a card</h2><p class="muted" style="font-size:14px;margin:0 0 4px">Scan the other phone\'s QR from inside this app, or paste the link they sent you (AirDrop, iMessage, WhatsApp).</p><div class="btnrow"><button class="btn primary" data-act="scan-open">Scan a QR</button><button class="btn" data-act="paste-open">Paste a link</button></div><div id="paste-box" hidden><textarea class="f" id="paste-txt" placeholder="Paste the hand-in link here"></textarea><div class="btnrow"><button class="btn primary" data-act="paste-go">Read it</button></div></div></div>';
+}
 function handinHtml(C){
   var r=R(), g=G(), rs=T().rounds;
-  var h='<div class="card"><h2>Hand in a card</h2><p class="muted" style="font-size:14px;margin:0 0 8px">Show the QR to the commissioner, or send the link. Only this group\'s round travels — nothing else on your phone.</p>';
+  var h=receiveHtml();
+  h+='<div class="card"><h2>Hand in a card</h2><p class="muted" style="font-size:14px;margin:0 0 8px">Show the QR to the commissioner, or send the link. Only this group\'s round travels — nothing else on your phone.</p>';
   h += '<div class="chips">'+rs.map(function(x,i){ return '<button class="chip" aria-pressed="'+(i===S.ui.r)+'" data-act="round" data-i="'+i+'">R'+x.n+'</button>'; }).join('')+'</div><div class="chips" style="margin-top:8px">'+r.groups.map(function(x,i){ return '<button class="chip" aria-pressed="'+(i===S.ui.g)+'" data-act="group" data-i="'+i+'">Group '+esc(x.id)+'</button>'; }).join('')+'</div>';
   var n = Object.keys(g.holes||{}).filter(function(k){ var gr=(g.holes[k]||{}).gross||{}; return Object.keys(gr).length; }).length;
   h += '<div class="muted" style="font-size:13px;margin-top:10px">Round '+r.n+' · '+esc(r.course)+' · Group '+esc(g.id)+' · <b>'+n+' holes</b> with scores · '+g.teams.map(function(t){return t.map(pname).map(esc).join(' & ');}).join(' v ')+'</div>';
@@ -406,6 +416,7 @@ function mergeIncoming(){ var i=S.incoming, T_=T(); var r=T_.rounds.filter(funct
 function commishHtml(C){
   var h='<div class="card"><label class="switch"><input type="checkbox" data-act="commish-toggle" '+(S.ui.commish?'checked':'')+'> Commissioner mode</label><div class="muted" style="font-size:13px;margin-top:6px">Turns on editing of players, draw, handicaps and locked rounds on this phone. Your phone is the master copy.</div></div>';
   if (!S.ui.commish) return h;
+  h += receiveHtml();
   var r=R(), cr=C.rounds[S.ui.r], rs=T().rounds, course=courseOf(r), tee=teeOf(r);
   h += '<div class="card"><h2>Round</h2><div class="chips">'+rs.map(function(x,i){ return '<button class="chip'+(x.locked?' done':'')+'" aria-pressed="'+(i===S.ui.r)+'" data-act="round" data-i="'+i+'">R'+x.n+'</button>'; }).join('')+'</div>';
   h += '<div class="grid2"><div><label class="f">Date</label><input class="f" type="date" value="'+esc(r.date)+'" data-act="rfield" data-k="date"></div><div><label class="f">Tee time</label><input class="f" value="'+esc(r.teeTime||'')+'" data-act="rfield" data-k="teeTime"></div>';
@@ -480,6 +491,10 @@ document.addEventListener('click', function(ev){
   else if (a==='copy-backup'){ copy(JSON.stringify({v:1,kind:'backup',at:new Date().toISOString(),T:T(),ui:S.ui}),'Backup copied'); }
   else if (a==='restore'){ $('restore-box').hidden=false; }
   else if (a==='restore-go'){ restore($('restore-txt').value); }
+  else if (a==='paste-open'){ $('paste-box').hidden=false; $('paste-txt').focus(); }
+  else if (a==='paste-go'){ restore($('paste-txt').value); }
+  else if (a==='scan-open'){ openScanner(); }
+  else if (a==='scan-close'){ if(_scan) _scan.close(); }
   else if (a==='merge'){ mergeIncoming(); }
   else if (a==='discard'){ S.incoming=null; render(); }
   else if (a==='ro-load'){ if (confirm('Replace the data on this phone with the commissioner\'s snapshot?'+localExtraWarning())) { S.ro=false; save(); toast('Loaded'); history.replaceState(null,'',location.pathname); render(); } }
@@ -518,6 +533,29 @@ function firstOpenHole(){ var g=G(); if(!g) return 1; var all=[].concat.apply([]
 function shuffleDraw(){ var r=R(), ids=T().players.map(function(p){return p.id;}); for(var i=ids.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=ids[i]; ids[i]=ids[j]; ids[j]=t; }
   var per=Math.ceil(ids.length/r.groups.length); r.groups.forEach(function(g,gi){ var chunk=ids.slice(gi*per,(gi+1)*per); var half=Math.ceil(chunk.length/2); g.teams=[chunk.slice(0,half), chunk.slice(half)]; }); save(); render(); }
 function localExtraWarning(){ try { var raw=localStorage.getItem(KEY); if(!raw) return ''; var o=JSON.parse(raw); var n=0; o.T.rounds.forEach(function(r){ r.groups.forEach(function(g){ Object.keys(g.holes||{}).forEach(function(h){ if(Object.keys((g.holes[h]||{}).gross||{}).length) n++; }); }); }); return n?'\n\nThis phone has '+n+' scored holes. If any haven\'t been handed in yet, hand them in first.':''; } catch(e){ return ''; } }
+/* in-app QR scanner: keeps the hand-in inside this app's own storage (iPhone home-screen apps don't share storage with Safari) */
+var _scan=null;
+function openScanner(){
+  if(!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia)||!window.jsQR){ toast('Camera not available here — paste the link instead'); return; }
+  var wrap=document.createElement('div'); wrap.className='scan';
+  wrap.innerHTML='<div class="scan-in"><video playsinline autoplay muted></video><canvas hidden></canvas><div class="scan-msg">Point at the QR on the other phone</div><button type="button" class="btn block" data-act="scan-close">Cancel</button></div>';
+  document.body.appendChild(wrap);
+  var video=wrap.querySelector('video'), canvas=wrap.querySelector('canvas'), ctx=canvas.getContext('2d',{willReadFrequently:true}), stream=null, raf=0, done=false;
+  _scan={ close:function(){ done=true; cancelAnimationFrame(raf); if(stream) stream.getTracks().forEach(function(t){ t.stop(); }); wrap.remove(); _scan=null; } };
+  navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}}}).then(function(s){ stream=s; video.srcObject=s; var p=video.play(); if(p&&p.catch) p.catch(function(){}); tick(); })
+    .catch(function(){ toast('Camera blocked — paste the link instead'); if(_scan) _scan.close(); });
+  function tick(){
+    if(done) return;
+    if(video.readyState>=2 && video.videoWidth){
+      canvas.width=video.videoWidth; canvas.height=video.videoHeight; ctx.drawImage(video,0,0);
+      var img=ctx.getImageData(0,0,canvas.width,canvas.height);
+      var code=jsQR(img.data,img.width,img.height,{inversionAttempts:'dontInvert'});
+      if(code&&code.data){ var m=/#(hi|view)=([A-Za-z0-9_\-]+)/.exec(code.data);
+        if(m){ _scan.close(); unpackJSON(m[2]).then(function(o){ applyIncoming(o,m[1]); toast('Card read'); }).catch(function(){ toast('Could not read that QR'); }); return; } }
+    }
+    raf=requestAnimationFrame(tick);
+  }
+}
 function copy(text,msg){ if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(function(){toast(msg);},function(){fallbackCopy(text,msg);}); else fallbackCopy(text,msg); }
 function fallbackCopy(text,msg){ var ta=document.createElement('textarea'); ta.value=text; document.body.appendChild(ta); ta.select(); try{ document.execCommand('copy'); toast(msg);}catch(e){ prompt('Copy this:',text);} document.body.removeChild(ta); }
 function shareText(title,url){ if(navigator.share) navigator.share({title:title,url:url}).catch(function(){}); else copy(url,'Link copied'); }
