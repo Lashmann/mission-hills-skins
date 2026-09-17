@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#1F6E43">
-<meta name="app-version" content="17k">
+<meta name="app-version" content="17l">
 <link rel="manifest" href="manifest.webmanifest">
 <title>Mission Hills Skins</title>
 <meta name="description" content="Team skins scorer for the Mission Hills 2026 trip — Stableford, snake, LD, CP, birdies, eagles, ferrets. Works offline.">
@@ -331,7 +331,7 @@ function dayCard(C,r,ri){
   });
   if (r.ladder){ var ids=Object.keys(r.ladder).sort(function(a,b){return r.ladder[a].place-r.ladder[b].place;});
     h += '<h3>Stableford ladder</h3><div class="tbl"><table><thead><tr><th>#</th><th style="text-align:left">Player</th><th>Pts</th><th>Skins</th></tr></thead><tbody>'+ids.map(function(id){ var l=r.ladder[id]; return '<tr><td class="num muted">'+l.place+(l.tied?'=':'')+'</td><td>'+esc(pname(id))+'</td><td class="num">'+l.pts+'</td><td class="frac">'+frac(l.skins)+'</td></tr>'; }).join('')+'</tbody></table></div>';
-    h += '<h3>Day totals</h3><div class="tbl"><table><thead><tr><th style="text-align:left">Player</th><th>Team ½</th><th>Ladder</th><th>Day</th></tr></thead><tbody>'+T().players.filter(function(p){return r.perPlayer[p.id].played;}).sort(function(a,b){return r.perPlayer[b.id].total-r.perPlayer[a.id].total;}).map(function(p){ var x=r.perPlayer[p.id]; return '<tr><td>'+esc(p.short||p.name)+'</td><td class="frac">'+frac(x.team)+'</td><td class="frac">'+frac(x.ladder)+'</td><td class="frac">'+frac(x.total)+'</td></tr>'; }).join('')+'</tbody></table></div>';
+    h += '<h3>Day totals</h3><div class="muted" style="font-size:12px;margin:-4px 0 6px">Pair ÷ 2 = your half of what your pair won on the course · Ladder = your Stableford ladder skins · Day = the two added, which is what goes on the trophy race.</div><div class="tbl"><table><thead><tr><th style="text-align:left">Player</th><th>Pair ÷ 2</th><th>Ladder</th><th>Day</th></tr></thead><tbody>'+T().players.filter(function(p){return r.perPlayer[p.id].played;}).sort(function(a,b){return r.perPlayer[b.id].total-r.perPlayer[a.id].total;}).map(function(p){ var x=r.perPlayer[p.id]; return '<tr><td>'+esc(p.short||p.name)+'</td><td class="frac">'+frac(x.team)+'</td><td class="frac">'+frac(x.ladder)+'</td><td class="frac">'+frac(x.total)+'</td></tr>'; }).join('')+'</tbody></table></div>';
   } else if (r.groups.some(function(g){return g.lastPlayed>0;})) h += '<div class="muted" style="font-size:12px;margin-top:8px">Ladder is worked out once both groups have 18 holes in.</div>';
   return h+'</div>';
 }
