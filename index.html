@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#1F6E43">
-<meta name="app-version" content="17i">
+<meta name="app-version" content="17j">
 <link rel="manifest" href="manifest.webmanifest">
 <title>Mission Hills Skins</title>
 <meta name="description" content="Team skins scorer for the Mission Hills 2026 trip — Stableford, snake, LD, CP, birdies, eagles, ferrets. Works offline.">
@@ -469,7 +469,7 @@ function commishHtml(C){
   h += '<div class="card"><h2>Share</h2>';
   h += '<h3 style="margin-top:4px">Setup for the scorers (tonight)</h3><p class="muted" style="font-size:13px;margin:0 0 6px">Draw, handicaps and carried pots for the next round — small enough to scan at the table. Scorers: Hand in → Scan a QR → Load.</p><div class="btnrow"><button class="btn primary" data-act="share-qr">'+(S.ui.shareQR?'Hide setup QR':'Show setup QR')+'</button><button class="btn" data-act="setup-link">Copy setup link</button></div><div class="qr" id="shareqr" '+(S.ui.shareQR?'':'hidden')+'></div>';
   h += '<h3>Standings for the group chat</h3><p class="muted" style="font-size:13px;margin:0 0 6px">Everything so far, read-only. Send it after you lock the day.</p><div class="btnrow"><button class="btn" data-act="share-link">Copy standings link</button><button class="btn" data-act="share-native">Share…</button></div></div>';
-  h += '<div class="card"><h2>Data</h2><div class="btnrow"><button class="btn" data-act="tname">Rename tournament</button><button class="btn danger" data-act="clear-scores">Clear all scores</button><button class="btn danger" data-act="fresh">Wipe to clean</button><button class="btn" data-act="reset-example">Load example data</button>'+(T().example?'<button class="btn primary" data-act="start-real">Start the real thing</button>':'')+'</div><div class="muted" style="font-size:12px;margin-top:6px">“Wipe to clean” is what a fresh install looks like: players, courses and rounds only. Your PIN survives all of these.</div>'
+  h += '<div class="card"><h2>Data</h2><div class="btnrow"><button class="btn" data-act="tname">Rename tournament</button><button class="btn danger" data-act="clear-scores">Clear all scores</button><button class="btn danger" data-act="reset-example">Reset to example</button>'+(T().example?'<button class="btn primary" data-act="start-real">Start the real thing</button>':'')+'</div><div class="muted" style="font-size:12px;margin-top:6px">“Start the real thing” keeps players, courses and rounds; wipes example scores and handicaps. Your PIN survives.</div>'
      + '<div class="row" style="margin-top:12px"><span class="muted" style="font-size:12px">App version <b class="num">'+esc(APP_VERSION)+'</b> · updates itself when opened with signal</span><button class="btn sm" data-act="check-update">Check for update</button></div></div>';
   return h;
 }
