@@ -1,0 +1,12 @@
+{
+  "name": "Mission Hills Skins",
+  "short_name": "Skins",
+  "description": "Team skins scorer — Mission Hills 2026",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F4F5F2",
+  "theme_color": "#1F6E43",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}

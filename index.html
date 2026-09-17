@@ -1,0 +1,558 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#1F6E43">
+<link rel="manifest" href="manifest.webmanifest">
+<title>Mission Hills Skins</title>
+<meta name="description" content="Team skins scorer for the Mission Hills 2026 trip — Stableford, snake, LD, CP, birdies, eagles, ferrets. Works offline.">
+<style>
+:root{
+  color-scheme:light dark;
+  --bg:#F4F5F2; --surface:#FFFFFF; --surface-2:#E9ECE6; --text:#17201B; --muted:#5E6B63; --line:#D6DCD4;
+  --green:#1F6E43; --green-bg:#E2F0E7; --amber:#B7791F; --amber-bg:#FBF0DA; --red:#B7362B; --red-bg:#F8E3E0; --blue:#2B5FA8; --blue-bg:#E1EAF8;
+  --ink:#FFFFFF;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
+  --bg:#101613; --surface:#182019; --surface-2:#212B23; --text:#EDF1EC; --muted:#94A199; --line:#2C3830;
+  --green:#4CAF77; --green-bg:#173225; --amber:#E0A43C; --amber-bg:#3A2D12; --red:#E06A5C; --red-bg:#3D1F1B; --blue:#7FA6E8; --blue-bg:#1B2B44; --ink:#101613; } }
+:root[data-theme="dark"]{
+  --bg:#101613; --surface:#182019; --surface-2:#212B23; --text:#EDF1EC; --muted:#94A199; --line:#2C3830;
+  --green:#4CAF77; --green-bg:#173225; --amber:#E0A43C; --amber-bg:#3A2D12; --red:#E06A5C; --red-bg:#3D1F1B; --blue:#7FA6E8; --blue-bg:#1B2B44; --ink:#101613; }
+*{box-sizing:border-box} [hidden]{display:none!important}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:16px;line-height:1.4;-webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent;
+  padding-inline:0;padding-block:0;display:flex;flex-direction:column;min-height:100%}
+h1,h2,h3{margin:0;line-height:1.15;text-wrap:balance}
+button{font:inherit;color:inherit;cursor:pointer}
+input,select{font:inherit;color:inherit}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+.eyebrow{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+
+/* shell */
+.top{position:sticky;top:0;z-index:5;background:var(--surface);border-bottom:1px solid var(--line);padding:calc(8px + env(safe-area-inset-top,0px)) 16px 8px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.top h1{font-size:17px;font-weight:800;letter-spacing:-.01em}
+.top .ctx{font-size:12px;color:var(--muted);text-align:right;line-height:1.25}
+main{flex:1;padding:14px 16px calc(84px + env(safe-area-inset-bottom,0px));max-width:720px;width:100%;margin:0 auto}
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:5;background:var(--surface);border-top:1px solid var(--line);display:flex;padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px))}
+nav.tabs button{flex:1;background:none;border:0;border-radius:8px;padding:8px 2px 6px;font-size:11px;font-weight:600;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:3px}
+nav.tabs button .ic{font-size:20px;line-height:1}
+nav.tabs button[aria-selected="true"]{color:var(--green);background:var(--green-bg)}
+nav.tabs button:focus-visible,.btn:focus-visible,.chip:focus-visible,.step button:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+
+/* pieces */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px;min-width:0}
+.card h2{font-size:18px;font-weight:800;margin-bottom:8px}
+.card h3{font-size:14px;font-weight:700;margin:12px 0 6px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.banner{border-radius:10px;padding:10px 12px;font-size:14px;margin-bottom:12px}
+.banner.info{background:var(--blue-bg);color:var(--text)}
+.banner.warn{background:var(--amber-bg)}
+.banner.bad{background:var(--red-bg)}
+.banner.good{background:var(--green-bg)}
+.btn{background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:10px 14px;font-weight:600;font-size:15px;min-height:44px}
+.btn.primary{background:var(--green);border-color:var(--green);color:var(--ink)}
+.btn.danger{background:var(--red-bg);border-color:var(--red);color:var(--red)}
+.btn.sm{padding:6px 10px;min-height:36px;font-size:13px}
+.btn.block{width:100%}
+.btnrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{background:var(--surface-2);border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:13px;font-weight:600;min-height:34px}
+.chip[aria-pressed="true"]{background:var(--green);border-color:var(--green);color:var(--ink)}
+.chip.amber[aria-pressed="true"]{background:var(--amber);border-color:var(--amber)}
+.chip.blue[aria-pressed="true"]{background:var(--blue);border-color:var(--blue)}
+.chip.done{border-color:var(--green)}
+.chip.sm{padding:4px 9px;font-size:12px;min-height:28px}
+.pill{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:2px 7px;border-radius:5px;vertical-align:middle}
+.pill.green{background:var(--green-bg);color:var(--green)}.pill.amber{background:var(--amber-bg);color:var(--amber)}.pill.red{background:var(--red-bg);color:var(--red)}.pill.blue{background:var(--blue-bg);color:var(--blue)}.pill.grey{background:var(--surface-2);color:var(--muted)}
+table{width:100%;border-collapse:collapse}
+th{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:right;padding:6px 6px;border-bottom:1px solid var(--line)}
+td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:right;vertical-align:middle}
+th:first-child,td:first-child{text-align:left}
+tr:last-child td{border-bottom:0}
+.tbl{overflow-x:auto;-webkit-overflow-scrolling:touch}
+label.f{display:block;font-size:12px;font-weight:600;color:var(--muted);margin:8px 0 3px}
+input.f,select.f{width:100%;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:9px 10px;font-size:15px;min-height:42px}
+input.f.sm{padding:6px 8px;min-height:36px;font-size:14px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+@media (max-width:420px){.grid3{grid-template-columns:1fr 1fr}}
+.frac{font-family:var(--mono);font-variant-numeric:tabular-nums;font-weight:700}
+.big{font-size:28px;font-weight:800;line-height:1}
+hr{border:0;border-top:1px solid var(--line);margin:12px 0}
+
+/* score */
+.holehdr{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.holehdr .hn{font-size:38px;font-weight:900;line-height:1;letter-spacing:-.02em}
+.holehdr .hm{font-size:13px;color:var(--muted)}
+.values{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.value{border-radius:8px;padding:6px 10px;font-size:13px;font-weight:700}
+.value.hole{background:var(--green-bg);color:var(--green)}.value.snake{background:var(--amber-bg);color:var(--amber)}.value.ldcp{background:var(--blue-bg);color:var(--blue)}
+.prow{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.prow .who{min-width:0}
+.prow .nm{font-weight:700;font-size:16px;overflow-wrap:anywhere}
+.prow .sub{font-size:12px;color:var(--muted)}
+.prow .dots{color:var(--green);letter-spacing:1px;font-size:11px}
+.step{display:flex;align-items:center;gap:0;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface-2)}
+.step button{width:46px;height:46px;border:0;background:transparent;font-size:22px;font-weight:700}
+.step .v{width:46px;text-align:center;font-family:var(--mono);font-size:20px;font-weight:700;background:var(--surface)}
+.step .v.pk{color:var(--red);font-size:14px}
+.pts{width:52px;text-align:center}
+.pts .n{font-family:var(--mono);font-size:22px;font-weight:800;line-height:1}
+.pts .l{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.pts.best .n{color:var(--green)}
+.pts .rt{font-size:11px;color:var(--muted);font-family:var(--mono);margin-top:2px;white-space:nowrap}
+.ptsline{display:flex;gap:4px 14px;flex-wrap:wrap;justify-content:center;font-size:12px;color:var(--muted);margin-top:8px;padding-top:8px;border-top:1px solid var(--line)}
+.ptsline b{color:var(--text);font-family:var(--mono);font-size:14px}
+.gridtbl .cpts{font-size:11px;font-weight:800;color:var(--green);margin-top:2px;min-height:13px;font-family:var(--mono)}
+.gridtbl .cpts .dots{color:var(--muted);font-size:9px;letter-spacing:1px}
+.gridtbl tr.tot td{border-top:2px solid var(--line);font-weight:800;padding-top:8px}
+.gridtbl tr.tot .cpts{color:var(--muted);font-weight:600}
+.teamsum{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;margin-top:8px}
+.teamsum .t{font-size:13px;font-weight:600;overflow-wrap:anywhere}
+.teamsum .t.r{text-align:right}
+.teamsum .s{font-family:var(--mono);font-size:22px;font-weight:800}
+.evrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 0;border-top:1px solid var(--line)}
+.evrow .lbl{width:64px;font-size:13px;font-weight:700}
+.evrow .lbl small{display:block;font-weight:400;font-size:11px;color:var(--muted)}
+.holenav{display:flex;gap:8px;margin-top:12px}
+.holenav .btn{flex:1}
+.holechips{display:grid;grid-template-columns:repeat(9,1fr);gap:4px;margin-top:10px}
+.holechips button{border:1px solid var(--line);background:var(--surface-2);border-radius:6px;padding:6px 0;font-size:12px;font-weight:700;min-height:32px}
+.holechips button.done{background:var(--green-bg);border-color:var(--green);color:var(--green)}
+.holechips button.cur{background:var(--green);border-color:var(--green);color:var(--ink)}
+.holechips button.part{background:var(--amber-bg);border-color:var(--amber);color:var(--amber)}
+.autobadge{font-size:11px;font-weight:800;padding:1px 6px;border-radius:5px;margin-left:6px;vertical-align:middle}
+.autobadge.b{background:var(--green-bg);color:var(--green)}.autobadge.e{background:var(--amber-bg);color:var(--amber)}
+.gridtbl td,.gridtbl th{padding:4px 3px;text-align:center}
+.gridtbl input{width:44px;text-align:center;padding:6px 2px;border:1px solid var(--line);border-radius:6px;background:var(--surface);font-family:var(--mono);font-size:15px;min-height:38px}
+.gridtbl select{max-width:64px;padding:4px 2px;border:1px solid var(--line);border-radius:6px;background:var(--surface);font-size:12px;min-height:38px}
+.gridtbl td:first-child{font-weight:700;text-align:left}
+.gridtbl .ldcp{font-size:9px;color:var(--blue);display:block;font-weight:700}
+
+/* board */
+.stand td.nm{font-weight:700}
+.stand td.tot{font-family:var(--mono);font-weight:800;font-size:17px}
+.stand tr.first td.tot{color:var(--green)}
+.stand td.r{font-family:var(--mono);font-size:13px;color:var(--muted)}
+.daycard .dh{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.evlist{list-style:none;margin:6px 0 0;padding:0;font-size:13px}
+.evlist li{display:flex;justify-content:space-between;gap:8px;padding:4px 0;border-top:1px dashed var(--line)}
+.evlist li span:last-child{font-family:var(--mono);font-weight:700}
+details summary{cursor:pointer;font-weight:700;font-size:14px;padding:6px 0}
+.qr{display:flex;justify-content:center;padding:14px;background:#fff;border-radius:12px;margin:10px 0}
+.qr img,.qr canvas{max-width:100%;height:auto}
+textarea.f{width:100%;min-height:80px;font-family:var(--mono);font-size:12px;border:1px solid var(--line);border-radius:8px;padding:8px;background:var(--surface);color:var(--text)}
+.rules p{margin:6px 0 10px;font-size:15px}
+.rules li{margin-bottom:6px}
+.switch{display:flex;align-items:center;gap:10px;font-weight:700}
+.switch input{width:22px;height:22px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));background:var(--text);color:var(--bg);padding:10px 16px;border-radius:999px;font-weight:600;font-size:14px;z-index:9;opacity:0;transition:opacity .2s}
+.toast.on{opacity:1}
+@media (prefers-reduced-motion:reduce){.toast{transition:none}}
+</style>
+</head>
+<body>
+<header class="top"><h1 id="appname">Mission Hills Skins</h1><div class="ctx" id="ctx"></div></header>
+<main id="main"></main>
+<nav class="tabs" id="tabs" role="tablist">
+  <button role="tab" data-tab="board"><span class="ic">🏆</span>Board</button>
+  <button role="tab" data-tab="score"><span class="ic">✍️</span>Score</button>
+  <button role="tab" data-tab="handin"><span class="ic">📤</span>Hand in</button>
+  <button role="tab" data-tab="commish"><span class="ic">🎩</span>Commish</button>
+  <button role="tab" data-tab="rules"><span class="ic">📜</span>Rules</button>
+</nav>
+<div class="toast" id="toast" role="status"></div>
+
+<script src="courses.js"></script>
+<script src="engine.js"></script>
+<script src="qrcode.min.js"></script>
+<script>
+(function(){
+'use strict';
+var E = window.SKINS, COURSES = window.COURSES;
+var KEY = 'mhs-state-v1';
+var $ = function(id){ return document.getElementById(id); };
+var esc = function(s){ return String(s==null?'':s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); };
+var CATS = ['hole','snake','ld','cp'];
+var CATN = { hole:'Hole skins', snake:'Snake', ld:'Longest drive', cp:'Closest to pin' };
+
+/* ---------- skins formatting: halves and quarters are real ---------- */
+function frac(n){
+  if (n===null||n===undefined||isNaN(n)) return '–';
+  var neg = n<0; n = Math.abs(n); var w = Math.floor(n+1e-9), r = n - w;
+  var f = Math.abs(r-0.5)<1e-6?'½':Math.abs(r-0.25)<1e-6?'¼':Math.abs(r-0.75)<1e-6?'¾':(r<1e-6?'':null);
+  var s = f===null ? (Math.round(n*100)/100).toString() : ((w||!f)?w:'')+f;
+  return (neg?'−':'')+s;
+}
+function fmtDate(iso){ if(!iso) return ''; var d=new Date(iso+'T00:00:00'); return d.toLocaleDateString(undefined,{weekday:'short',day:'numeric',month:'short'}); }
+function today(){ var d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function toast(msg){ var t=$('toast'); t.textContent=msg; t.classList.add('on'); clearTimeout(t._h); t._h=setTimeout(function(){ t.classList.remove('on'); },1800); }
+
+/* ---------- example data (seeded, stable) ---------- */
+function rng(seed){ var s=seed>>>0; return function(){ s=(s*1664525+1013904223)>>>0; return s/4294967296; }; }
+function exampleTournament(){
+  var players = [
+    {id:'danny', name:'Danny Cape', short:'Danny'}, {id:'lachlan', name:'Lachlan Symes', short:'Lachlan'},
+    {id:'micks', name:'Michael Symes', short:'Mick S'}, {id:'elliot', name:'Elliot', short:'Elliot'},
+    {id:'dale', name:'Dale', short:'Dale'}, {id:'zac', name:'Zac', short:'Zac'},
+    {id:'poss', name:'Michael Posavac', short:'Poss'}, {id:'slim', name:'Slim', short:'Slim'} ];
+  var idx = { danny:12.4, lachlan:14.3, micks:18.0, elliot:9.7, dale:22.5, zac:16.1, poss:11.2, slim:20.8 };  // EXAMPLE numbers
+  var rounds = [
+    { n:1, date:'2026-11-29', course:'Annika',   tee:'Blue', teeTime:'10:00' },
+    { n:2, date:'2026-11-30', course:'Ozaki',    tee:'Blue', teeTime:'08:00' },
+    { n:3, date:'2026-12-01', course:'Olazabal', tee:'Blue', teeTime:'08:56' },
+    { n:4, date:'2026-12-03', course:'Vijay',    tee:'Blue', teeTime:'09:52' },
+    { n:5, date:'2026-12-04', course:'Norman',   tee:'Blue', teeTime:'08:00' } ];
+  rounds.forEach(function(r){ r.index = Object.assign({}, idx); r.hcOverride = {}; r.groups = [{id:'A', teams:[[],[]], holes:{}}, {id:'B', teams:[[],[]], holes:{}}]; r.locked=false; });
+  rounds[0].groups[0].teams = [['danny','lachlan'],['micks','elliot']]; rounds[0].groups[1].teams = [['dale','zac'],['poss','slim']];
+  rounds[1].groups[0].teams = [['danny','poss'],['dale','elliot']];     rounds[1].groups[1].teams = [['lachlan','slim'],['micks','zac']];
+  var T = { name:'Mission Hills 2026', example:true, entry:150, prizes:[1050,150], players:players, courses:COURSES, rules:{}, rounds:rounds };
+  // score round 1 fully and round 2 group A to hole 6, with believable numbers
+  var R = rng(20261129);
+  function scoreGroup(round, g, upTo){
+    var course = COURSES[round.course], tee = course.tees.filter(function(t){return t.name===round.tee;})[0];
+    var hc = {}; [].concat.apply([],g.teams).forEach(function(p){ hc[p] = E.playingHandicap(round.index[p], tee.slope, tee.rating, course.par); });
+    var sp = E.specialHoles(course, round.tee);
+    for (var h=1; h<=upTo; h++){
+      var H = course.holes[h-1], e = {gross:{}}, all=[].concat.apply([],g.teams);
+      all.forEach(function(p){ var s=E.strokesOnHole(hc[p],H.si); var r=R(); var d = r<0.06?-1: r<0.40?0: r<0.75?1: r<0.92?2:3; var gross=H.par+s+d-(s>1?1:0); if (R()<0.02) gross='P'; e.gross[p]=gross; });
+      if (R()<0.14){ var c=all.filter(function(p){return e.gross[p]!=='P';}); if(c.length) e.snake=c[Math.floor(R()*c.length)]; }
+      if (sp.ld.indexOf(h)>=0 && R()<0.8) e.ld = all[Math.floor(R()*all.length)];
+      if (sp.cp.indexOf(h)>=0 && R()<0.7) e.cp = all[Math.floor(R()*all.length)];
+      if (h===11 && g.id==='A' && round.n===1) e.ferret = all[1];
+      g.holes[h]=e;
+    }
+  }
+  scoreGroup(rounds[0], rounds[0].groups[0], 18); scoreGroup(rounds[0], rounds[0].groups[1], 18);
+  rounds[0].locked = true;
+  scoreGroup(rounds[1], rounds[1].groups[0], 6);
+  return T;
+}
+function emptyTournament(){ var T = exampleTournament(); T.example=false; T.rounds.forEach(function(r){ r.locked=false; r.groups.forEach(function(g){ g.holes={}; }); }); return T; }
+
+/* ---------- state ---------- */
+var S = { T:null, ui:{ tab:'board', r:0, g:0, hole:1, mode:'live', commish:false, open:{} }, ro:false, incoming:null };
+function load(){ try { var raw=localStorage.getItem(KEY); if(raw){ var o=JSON.parse(raw); if(o&&o.T&&o.T.rounds){ S.T=o.T; S.ui=Object.assign(S.ui,o.ui||{}); S.T.courses = S.T.courses||COURSES; return; } } } catch(e){} S.T = exampleTournament(); }
+function save(){ if (S.ro) return; try { localStorage.setItem(KEY, JSON.stringify({T:S.T, ui:S.ui})); } catch(e){ toast('Could not save — storage blocked'); } }
+function T(){ return S.T; } function R(){ return T().rounds[S.ui.r]; } function G(){ var r=R(); return r&&r.groups[S.ui.g]; }
+function pl(id){ return T().players.filter(function(p){return p.id===id;})[0] || {id:id,name:id,short:id}; }
+function pname(id){ return pl(id).short||pl(id).name; }
+function calc(){ return E.computeTournament(T()); }
+function courseOf(r){ return T().courses[r.course]; }
+function teeOf(r){ var c=courseOf(r); return (c&&c.tees.filter(function(t){return t.name===r.tee;})[0])||{}; }
+function pickRound(){ // today's round, else first not locked, else last
+  var d=today(), rs=T().rounds; for(var i=0;i<rs.length;i++) if(rs[i].date===d) return i;
+  for(var j=0;j<rs.length;j++) if(!rs[j].locked) return j; return rs.length-1; }
+function isCommish(){ return !S.ro && S.ui.commish; }
+function canEdit(r){ return !S.ro && (isCommish() || !r.locked); }
+
+/* ---------- mutations ---------- */
+function ensureHole(g,h){ g.holes[h]=g.holes[h]||{gross:{}}; g.holes[h].gross=g.holes[h].gross||{}; return g.holes[h]; }
+function setGross(h,pid,val){ var r=R(),g=G(); if(!canEdit(r)) return; var e=ensureHole(g,h); if(val===null) delete e.gross[pid]; else e.gross[pid]=val; save(); render(); }
+function bump(h,pid,d){ var g=G(); var e=ensureHole(g,h); var cur=e.gross[pid]; var course=courseOf(R()); var par=course.holes[h-1].par;
+  var v = (typeof cur==='number') ? cur+d : (cur==='P' ? par : par+(d>0?0:-1)) ; if(cur===undefined&&d>0) v=par; if(v<1) v=1; if(v>15) v=15; setGross(h,pid,v); }
+function togglePickup(h,pid){ var g=G(); var e=ensureHole(g,h); setGross(h,pid, e.gross[pid]==='P'?null:'P'); }
+function setEvent(h,key,pid){ var r=R(),g=G(); if(!canEdit(r)) return; var e=ensureHole(g,h); if(e[key]===pid||pid===null) delete e[key]; else e[key]=pid; save(); render(); }
+
+/* ---------- views ---------- */
+function render(){
+  var tab = S.ui.tab; if (S.ro && (tab==='handin'||tab==='commish')) tab='board';
+  Array.prototype.forEach.call($('tabs').children, function(b){ b.setAttribute('aria-selected', String(b.dataset.tab===tab)); b.hidden = S.ro && (b.dataset.tab==='handin'||b.dataset.tab==='commish'); });
+  var C = calc(); var r=R();
+  $('appname').textContent = T().name || 'Mission Hills Skins';
+  $('ctx').innerHTML = r ? 'R'+r.n+' · '+esc(r.course)+'<br>'+esc(fmtDate(r.date))+(r.teeTime?' · '+esc(r.teeTime):'') : '';
+  var html = '';
+  if (S.incoming) html += incomingHtml();
+  if (S.ro) html += '<div class="banner info"><b>Read-only snapshot</b> shared by the commissioner'+(S.roAt?' · '+esc(S.roAt):'')+'.<div class="btnrow"><button class="btn sm" data-act="ro-load">Load this into my app</button></div></div>';
+  else if (T().example) html += '<div class="banner warn"><b>Example data.</b> Scores and handicaps are made up so you can poke at it. Commish → Data → “Start the real thing” when ready.</div>';
+  html += tab==='board'?boardHtml(C): tab==='score'?scoreHtml(C): tab==='handin'?handinHtml(C): tab==='commish'?commishHtml(C): rulesHtml();
+  $('main').innerHTML = html;
+  if (tab==='handin' && !S.ro) drawQR();
+  if (tab==='commish' && S.ui.shareQR) drawShareQR();
+}
+
+/* ----- Board ----- */
+function boardHtml(C){
+  var T_=T(), rs=C.rounds, h='';
+  h += '<div class="card stand"><div class="row"><h2>Trophy race</h2><span class="muted" style="font-size:13px">1st $'+esc(T_.prizes[0])+' · 2nd $'+esc(T_.prizes[1])+' · entry $'+esc(T_.entry)+'</span></div>';
+  h += '<div class="tbl"><table><thead><tr><th>#</th><th style="text-align:left">Player</th>'+rs.map(function(r){return '<th>R'+r.n+'</th>';}).join('')+'<th>Skins</th></tr></thead><tbody>';
+  var prev=null, rank=0;
+  C.standings.forEach(function(s,i){ if(s.total!==prev){ rank=i+1; prev=s.total; }
+    h += '<tr class="'+(i===0&&s.total>0?'first':'')+'"><td class="num muted">'+rank+'</td><td class="nm">'+esc(s.name)+'</td>'+s.byRound.map(function(v,ri){ var rr=rs[ri]; return '<td class="r">'+(v===null?'·':frac(v))+(rr&&!rr.complete&&v!==null?'<span class="muted">*</span>':'')+'</td>'; }).join('')+'<td class="tot">'+frac(s.total)+'</td></tr>'; });
+  h += '</tbody></table></div><div class="muted" style="font-size:12px;margin-top:6px">* round in progress — provisional. Ties on the trophy: to be decided.</div></div>';
+  var live = rs.filter(function(r){ return !r.complete; })[0];
+  var cn = live ? live.carriedIn : C.carryNext, cnTitle = live ? 'Carried into Round '+live.n : 'Unwon after the final round';
+  if (cn && CATS.some(function(k){return cn[k]>0;})) h += '<div class="card"><h2>'+cnTitle+'</h2><div class="chips">'+CATS.map(function(k){ return '<span class="chip sm">'+CATN[k]+' <b class="num">'+frac(cn[k])+'</b></span>'; }).join('')+'</div><div class="muted" style="font-size:12px;margin-top:6px">'+(live?'Split evenly between the groups; each share sits on the first hole of its kind and rolls until won.':'Left over after round 5 — to be decided.')+'</div></div>';
+  rs.forEach(function(r,ri){ h += dayCard(C,r,ri); });
+  return h;
+}
+function dayCard(C,r,ri){
+  var R_=T().rounds[ri], status = r.locked?'<span class="pill green">Final</span>': r.complete?'<span class="pill amber">Complete · not locked</span>': r.groups.some(function(g){return g.lastPlayed>0;})?'<span class="pill red">Live</span>':'<span class="pill grey">Upcoming</span>';
+  var h = '<div class="card daycard"><div class="dh"><div><h2>Round '+r.n+' · '+esc(r.course)+'</h2><div class="muted" style="font-size:13px">'+esc(fmtDate(r.date))+(R_.teeTime?' · tee '+esc(R_.teeTime):'')+' · '+esc(r.tee)+' tees'+(r.slope?' · slope '+r.slope:'')+'</div></div>'+status+'</div>';
+  var drawn = r.groups.some(function(g){ return g.teams.some(function(t){return t.length;}); });
+  if (!drawn) return h+'<div class="muted" style="margin-top:8px">Draw not set yet.</div></div>';
+  r.groups.forEach(function(g){
+    h += '<h3>Group '+esc(g.id)+' <span class="muted" style="font-weight:400">· '+(g.complete?'18 holes':g.lastPlayed?'through hole '+g.lastPlayed:'not started')+'</span></h3>';
+    h += '<div class="teamsum">'+g.teams.map(function(t,i){ return '<div class="t'+(i?' r':'')+'">'+t.map(pname).map(esc).join(' &amp; ')+'<br><span class="s">'+frac(g.teamSkins[i])+'</span> <span class="muted" style="font-size:12px">→ '+frac(g.teamSkins[i]/(t.length||1))+' each</span></div>'+(i===0?'<div class="muted">v</div>':''); }).join('')+'</div>';
+    if (g.events.length) h += '<details><summary>'+g.events.length+' skins events</summary><ul class="evlist">'+g.events.map(function(e){ return '<li><span>H'+e.hole+' · '+evName(e)+'</span><span>'+frac(e.value)+' → '+esc(g.teams[e.team].map(pname).join(' & '))+'</span></li>'; }).join('')+'</ul></details>';
+    if (g.complete) h += '<div class="muted" style="font-size:12px;margin-top:4px">Unwon: '+CATS.map(function(k){return CATN[k]+' '+frac(g.unwon[k]);}).join(' · ')+'</div>';
+  });
+  if (r.ladder){ var ids=Object.keys(r.ladder).sort(function(a,b){return r.ladder[a].place-r.ladder[b].place;});
+    h += '<h3>Stableford ladder</h3><div class="tbl"><table><thead><tr><th>#</th><th style="text-align:left">Player</th><th>Pts</th><th>Skins</th></tr></thead><tbody>'+ids.map(function(id){ var l=r.ladder[id]; return '<tr><td class="num muted">'+l.place+(l.tied?'=':'')+'</td><td>'+esc(pname(id))+'</td><td class="num">'+l.pts+'</td><td class="frac">'+frac(l.skins)+'</td></tr>'; }).join('')+'</tbody></table></div>';
+    h += '<h3>Day totals</h3><div class="tbl"><table><thead><tr><th style="text-align:left">Player</th><th>Team ½</th><th>Ladder</th><th>Day</th></tr></thead><tbody>'+T().players.filter(function(p){return r.perPlayer[p.id].played;}).sort(function(a,b){return r.perPlayer[b.id].total-r.perPlayer[a.id].total;}).map(function(p){ var x=r.perPlayer[p.id]; return '<tr><td>'+esc(p.short||p.name)+'</td><td class="frac">'+frac(x.team)+'</td><td class="frac">'+frac(x.ladder)+'</td><td class="frac">'+frac(x.total)+'</td></tr>'; }).join('')+'</tbody></table></div>';
+  } else if (r.groups.some(function(g){return g.lastPlayed>0;})) h += '<div class="muted" style="font-size:12px;margin-top:8px">Ladder is worked out once both groups have 18 holes in.</div>';
+  return h+'</div>';
+}
+function evName(e){ var n = {hole:'Hole skin',snake:'Snake',birdie:'Birdie',eagle:'Eagle',ace:'Hole in one!',ferret:'Ferret',ld:'Longest drive',cp:'Closest to pin'}[e.type]||e.type; return n+(e.player?' — '+esc(pname(e.player)):''); }
+
+/* ----- Score ----- */
+function scoreHtml(C){
+  var r=R(), g=G(), rs=T().rounds;
+  var h = '<div class="card"><div class="chips">'+rs.map(function(x,i){ return '<button class="chip'+(x.locked?' done':'')+'" aria-pressed="'+(i===S.ui.r)+'" data-act="round" data-i="'+i+'">R'+x.n+' '+esc(x.course)+'</button>'; }).join('')+'</div>';
+  h += '<div class="chips" style="margin-top:8px">'+r.groups.map(function(x,i){ return '<button class="chip" aria-pressed="'+(i===S.ui.g)+'" data-act="group" data-i="'+i+'">Group '+esc(x.id)+'</button>'; }).join('')+'<span style="flex:1"></span><button class="chip" aria-pressed="'+(S.ui.mode==='grid')+'" data-act="mode">'+(S.ui.mode==='grid'?'Grid view':'Hole by hole')+'</button></div></div>';
+  var drawn = g.teams.every(function(t){return t.length>0;});
+  if (!drawn) return h+'<div class="card"><h2>Draw not set</h2><p class="muted">The commissioner sets the teams for this round (Commish → Draw).</p></div>';
+  if (r.locked && !isCommish()) h += '<div class="banner good">Round '+r.n+' is <b>locked</b> by the commissioner — read only.</div>';
+  var cr = C.rounds[S.ui.r], cg = cr.groups[S.ui.g], course=courseOf(r), all=[].concat.apply([],g.teams);
+  h += '<div class="card">';
+  h += '<div class="teamsum">'+g.teams.map(function(t,i){ return '<div class="t'+(i?' r':'')+'">'+t.map(pname).map(esc).join(' &amp; ')+'<br><span class="s">'+frac(cg.teamSkins[i])+'</span></div>'+(i===0?'<div class="muted">v</div>':''); }).join('')+'</div>';
+  h += '<div class="muted" style="font-size:12px;text-align:center;margin-top:4px">'+(cg.complete?'18 holes in':cg.lastPlayed?'through hole '+cg.lastPlayed:'not started')+(cg.gaps.length?' · <span style="color:var(--amber)">holes '+cg.gaps.join(', ')+' entered out of order — fill the gap</span>':'')+'</div>';
+  var tot = roundTotals(g,cr,course,all);
+  h += '<div class="ptsline">'+all.map(function(p){ return '<span>'+esc(pname(p))+' <b>'+tot[p].pts+'</b> pts'+(tot[p].holes&&tot[p].holes<18?' <span class="muted">('+tot[p].holes+')</span>':'')+'</span>'; }).join('')+'</div>';
+  h += '</div>';
+  if (S.ui.mode==='grid') return h + gridHtml(C,r,g,cg,course,all,tot);
+  var hole = Math.min(Math.max(S.ui.hole,1),18), H=course.holes[hole-1], e=(g.holes[hole]||{}), gross=e.gross||{};
+  var isLD = cr.ldHoles.indexOf(hole)>=0, isCP = cr.cpHoles.indexOf(hole)>=0;
+  // values on THIS hole: pots after the last complete hole, +1
+  var rec = cg.holes.filter(function(x){return x.hole===hole;})[0];
+  var holeVal = rec?rec.holeValue:cg.pots.hole+1, snakeVal = rec?rec.snakeValue:Math.min(cg.pots.snake+1,C.rules.snakeCap);
+  var ldVal = rec?rec.ldValue:cg.pots.ld+1, cpVal = rec?rec.cpValue:cg.pots.cp+1;
+  var yds = (H.yards||{})[r.tee];
+  h += '<div class="card"><div class="holehdr"><div><span class="eyebrow">Hole</span><div class="hn">'+hole+'</div></div><div style="text-align:right"><div style="font-size:15px;font-weight:700">Par '+H.par+' · SI '+H.si+'</div><div class="hm">'+(yds?yds+' yds · ':'')+esc(r.tee)+(isLD?' · <b style="color:var(--blue)">LD hole</b>':'')+(isCP?' · <b style="color:var(--blue)">CP hole</b>':'')+'</div></div></div>';
+  h += '<div class="values"><span class="value hole">Hole worth '+frac(holeVal)+'</span><span class="value snake">Snake worth '+frac(snakeVal)+'</span>'+(isLD?'<span class="value ldcp">LD worth '+frac(ldVal)+'</span>':'')+(isCP?'<span class="value ldcp">CP worth '+frac(cpVal)+'</span>':'')+'</div>';
+  var bestPts = -1; all.forEach(function(p){ var pts = E.stableford(gross[p],H.par,E.strokesOnHole(cr.hc[p].playing,H.si)); if(pts!==null&&pts>bestPts) bestPts=pts; });
+  g.teams.forEach(function(t,ti){
+    t.forEach(function(p){
+      var st = E.strokesOnHole(cr.hc[p].playing,H.si), gv=gross[p], pts=E.stableford(gv,H.par,st);
+      var badge = (typeof gv==='number') ? (gv<=H.par-2?'<span class="autobadge e">'+(gv===1?'ACE':'EAGLE')+'</span>': gv===H.par-1?'<span class="autobadge b">BIRDIE</span>':'') : '';
+      h += '<div class="prow"><div class="who"><div class="nm">'+esc(pname(p))+badge+'</div><div class="sub">Team '+(ti+1)+' · hc '+(cr.hc[p].playing===null?'?':cr.hc[p].playing)+' · <span class="dots">'+(st>0?'●'.repeat(st):st<0?'○':'')+'</span>'+(st?' '+st+' stroke'+(st===1||st===-1?'':'s'):' no stroke')+'</div></div>';
+      h += '<div class="step"><button data-act="bump" data-h="'+hole+'" data-p="'+p+'" data-d="-1" aria-label="minus">−</button><div class="v'+(gv==='P'?' pk':'')+'" data-act="pickup" data-h="'+hole+'" data-p="'+p+'">'+(gv==='P'?'PICK':(gv||'–'))+'</div><button data-act="bump" data-h="'+hole+'" data-p="'+p+'" data-d="1" aria-label="plus">+</button></div>';
+      h += '<div class="pts'+(pts!==null&&pts===bestPts&&bestPts>=0?' best':'')+'"><div class="n">'+(pts===null?'–':pts)+'</div><div class="l">pts</div><div class="rt">'+tot[p].pts+' rd</div></div></div>';
+    });
+  });
+  h += '<div class="muted" style="font-size:11px;margin-top:4px">Tap the number to mark a pick-up (0 points; can\'t win the snake).</div>';
+  h += evRow('snake','Snake','furthest first putt, >6 ft, holed',e.snake,all,hole,'amber');
+  if (isLD) h += evRow('ld','LD','longest on the fairway',e.ld,all,hole,'blue');
+  if (isCP) h += evRow('cp','CP','closest on the green',e.cp,all,hole,'blue');
+  h += evRow('ferret','Ferret','holed from off the green, no putter',e.ferret,all,hole,'');
+  if (rec && rec.snakeInvalid) h += '<div class="banner bad" style="margin-top:8px">Snake claimed by a player who picked up — not valid.</div>';
+  h += '<div class="holenav"><button class="btn" data-act="hole" data-h="'+(hole-1)+'" '+(hole<=1?'disabled':'')+'>'+(hole<=1?'‹ First hole':'‹ Hole '+(hole-1))+'</button><button class="btn primary" data-act="hole" data-h="'+(hole+1)+'" '+(hole>=18?'disabled':'')+'>'+(hole>=18?'Last hole ›':'Hole '+(hole+1)+' ›')+'</button></div>';
+  h += '<div class="holechips">'+course.holes.map(function(x){ var ee=g.holes[x.hole]||{}, gg=ee.gross||{}; var n=all.filter(function(p){return E.isEntered(gg[p]);}).length; var cl = x.hole===hole?'cur': n===all.length?'done': n?'part':''; return '<button class="'+cl+'" data-act="hole" data-h="'+x.hole+'">'+x.hole+'</button>'; }).join('')+'</div>';
+  return h+'</div>';
+}
+function evRow(key,label,sub,cur,all,hole,color){
+  return '<div class="evrow"><div class="lbl">'+label+'<small>'+sub+'</small></div><div class="chips">'+all.map(function(p){ return '<button class="chip sm '+color+'" aria-pressed="'+(cur===p)+'" data-act="ev" data-k="'+key+'" data-h="'+hole+'" data-p="'+p+'">'+esc(pname(p))+'</button>'; }).join('')+'</div></div>';
+}
+function ptsOn(H,p,gv,cr){ return E.stableford(gv, H.par, E.strokesOnHole(cr.hc[p].playing, H.si)); }
+function roundTotals(g,cr,course,all){ var out={}; all.forEach(function(p){ out[p]={pts:0,gross:0,holes:0}; });
+  course.holes.forEach(function(H){ var gr=(g.holes[H.hole]||{}).gross||{}; all.forEach(function(p){ var v=gr[p]; if(!E.isEntered(v)) return; out[p].pts+=ptsOn(H,p,v,cr); out[p].holes++; if(typeof v==='number') out[p].gross+=v; }); });
+  return out; }
+function gridHtml(C,r,g,cg,course,all,tot){
+  var cr=C.rounds[S.ui.r];
+  var h='<div class="card"><h2>Grid entry</h2><div class="muted" style="font-size:12px;margin-bottom:6px">Gross strokes per hole; points work themselves out underneath (dots = strokes received). P = pick-up. Snake / LD / CP / ferret: pick the player.</div><div class="tbl"><table class="gridtbl"><thead><tr><th>Hole</th>'+all.map(function(p){return '<th>'+esc(pname(p))+'</th>';}).join('')+'<th>Snake</th><th>LD/CP</th><th>Ferret</th></tr></thead><tbody>';
+  course.holes.forEach(function(H){ var e=g.holes[H.hole]||{}, gr=e.gross||{}; var isLD=cr.ldHoles.indexOf(H.hole)>=0, isCP=cr.cpHoles.indexOf(H.hole)>=0;
+    h += '<tr><td>'+H.hole+'<span class="muted" style="font-size:10px;display:block">par '+H.par+' · SI '+H.si+'</span>'+(isLD?'<span class="ldcp">LD</span>':'')+(isCP?'<span class="ldcp">CP</span>':'')+'</td>';
+    all.forEach(function(p){ var v=gr[p], st=E.strokesOnHole(cr.hc[p].playing,H.si), pts=E.isEntered(v)?ptsOn(H,p,v,cr):null;
+      h += '<td><input inputmode="numeric" pattern="[0-9Pp]*" value="'+(v===undefined?'':v)+'" data-act="gcell" data-h="'+H.hole+'" data-p="'+p+'" aria-label="hole '+H.hole+' '+esc(pname(p))+'"><div class="cpts">'+(st?'<span class="dots">'+'●'.repeat(Math.abs(st))+'</span> ':'')+(pts===null?'':pts)+'</div></td>'; });
+    h += '<td>'+sel('snake',H.hole,e.snake,all)+'</td><td>'+(isLD?sel('ld',H.hole,e.ld,all):isCP?sel('cp',H.hole,e.cp,all):'<span class="muted">–</span>')+'</td><td>'+sel('ferret',H.hole,e.ferret,all)+'</td></tr>';
+  });
+  h += '<tr class="tot"><td>Total</td>'+all.map(function(p){ return '<td><div class="num" style="font-size:18px">'+tot[p].pts+'</div><div class="cpts">'+(tot[p].holes?tot[p].gross+' gross':'')+'</div></td>'; }).join('')+'<td colspan="3"></td></tr>';
+  return h+'</tbody></table></div></div>';
+}
+function sel(key,hole,cur,all){ return '<select data-act="gsel" data-k="'+key+'" data-h="'+hole+'"><option value="">–</option>'+all.map(function(p){return '<option value="'+p+'"'+(cur===p?' selected':'')+'>'+esc(pname(p))+'</option>';}).join('')+'</select>'; }
+
+/* ----- Hand in ----- */
+function handinHtml(C){
+  var r=R(), g=G(), rs=T().rounds;
+  var h='<div class="card"><h2>Hand in a card</h2><p class="muted" style="font-size:14px;margin:0 0 8px">Show the QR to the commissioner, or send the link. Only this group\'s round travels — nothing else on your phone.</p>';
+  h += '<div class="chips">'+rs.map(function(x,i){ return '<button class="chip" aria-pressed="'+(i===S.ui.r)+'" data-act="round" data-i="'+i+'">R'+x.n+'</button>'; }).join('')+'</div><div class="chips" style="margin-top:8px">'+r.groups.map(function(x,i){ return '<button class="chip" aria-pressed="'+(i===S.ui.g)+'" data-act="group" data-i="'+i+'">Group '+esc(x.id)+'</button>'; }).join('')+'</div>';
+  var n = Object.keys(g.holes||{}).filter(function(k){ var gr=(g.holes[k]||{}).gross||{}; return Object.keys(gr).length; }).length;
+  h += '<div class="muted" style="font-size:13px;margin-top:10px">Round '+r.n+' · '+esc(r.course)+' · Group '+esc(g.id)+' · <b>'+n+' holes</b> with scores · '+g.teams.map(function(t){return t.map(pname).map(esc).join(' & ');}).join(' v ')+'</div>';
+  h += '<div class="qr" id="qr"></div><div class="btnrow"><button class="btn primary" data-act="copy-handin">Copy link</button><button class="btn" data-act="share-handin">Share…</button></div><div class="muted" id="hi-size" style="font-size:11px;margin-top:6px"></div></div>';
+  h += '<div class="card"><h2>Backup</h2><p class="muted" style="font-size:14px;margin:0">Everything on this phone as one block of text. Keep it somewhere — clearing browser data loses the app\'s memory.</p><div class="btnrow"><button class="btn" data-act="copy-backup">Copy backup</button><button class="btn" data-act="restore">Restore from backup…</button></div><div id="restore-box" hidden><textarea class="f" id="restore-txt" placeholder="Paste a backup or a link here"></textarea><div class="btnrow"><button class="btn primary" data-act="restore-go">Restore</button></div></div></div>';
+  return h;
+}
+function handinPayload(){ var r=R(), g=G(); return { v:1, kind:'handin', round:r.n, date:r.date, course:r.course, group:g.id, teams:g.teams, holes:g.holes||{}, at:new Date().toISOString(), from:'phone' }; }
+var _hiLink='';
+function drawQR(){ var box=$('qr'); if(!box) return; box.innerHTML=''; packJSON(handinPayload()).then(function(s){ _hiLink = location.origin+location.pathname+'#hi='+s; $('hi-size').textContent = _hiLink.length+' characters in the link'; try { new QRCode(box, { text:_hiLink, width:236, height:236, correctLevel: QRCode.CorrectLevel.L }); } catch(e){ box.innerHTML='<div class="muted">QR too large — use the link instead.</div>'; } }); }
+function incomingHtml(){ var i=S.incoming, T_=T();
+  if (i.kind==='handin'){ var ri=T_.rounds.findIndex(function(r){return r.n===i.round;}); var n=Object.keys(i.holes).length; var teams=i.teams.map(function(t){return t.map(pname).join(' & ');}).join(' v ');
+    return '<div class="banner good"><b>Card received:</b> Round '+i.round+' · '+esc(i.course)+' · Group '+esc(i.group)+' · '+n+' holes · '+esc(teams)+(ri<0?'<br><b style="color:var(--red)">No Round '+i.round+' on this phone.</b>':'')+'<div class="btnrow"><button class="btn primary sm" data-act="merge" '+(ri<0?'disabled':'')+'>Merge into my copy</button><button class="btn sm" data-act="discard">Discard</button></div></div>'; }
+  return '';
+}
+function mergeIncoming(){ var i=S.incoming, T_=T(); var r=T_.rounds.filter(function(x){return x.n===i.round;})[0]; if(!r) return;
+  var g=r.groups.filter(function(x){return x.id===i.group;})[0]; if(!g){ g={id:i.group,teams:i.teams,holes:{}}; r.groups.push(g); }
+  var drawn=g.teams.every(function(t){return t.length;}); if(!drawn) g.teams=i.teams;
+  g.holes=i.holes; g.handedIn=i.at; S.incoming=null; save(); toast('Merged Group '+i.group+', Round '+i.round); render(); }
+
+/* ----- Commish ----- */
+function commishHtml(C){
+  var h='<div class="card"><label class="switch"><input type="checkbox" data-act="commish-toggle" '+(S.ui.commish?'checked':'')+'> Commissioner mode</label><div class="muted" style="font-size:13px;margin-top:6px">Turns on editing of players, draw, handicaps and locked rounds on this phone. Your phone is the master copy.</div></div>';
+  if (!S.ui.commish) return h;
+  var r=R(), cr=C.rounds[S.ui.r], rs=T().rounds, course=courseOf(r), tee=teeOf(r);
+  h += '<div class="card"><h2>Round</h2><div class="chips">'+rs.map(function(x,i){ return '<button class="chip'+(x.locked?' done':'')+'" aria-pressed="'+(i===S.ui.r)+'" data-act="round" data-i="'+i+'">R'+x.n+'</button>'; }).join('')+'</div>';
+  h += '<div class="grid2"><div><label class="f">Date</label><input class="f" type="date" value="'+esc(r.date)+'" data-act="rfield" data-k="date"></div><div><label class="f">Tee time</label><input class="f" value="'+esc(r.teeTime||'')+'" data-act="rfield" data-k="teeTime"></div>';
+  h += '<div><label class="f">Course</label><select class="f" data-act="rfield" data-k="course">'+Object.keys(T().courses).map(function(c){return '<option'+(c===r.course?' selected':'')+'>'+esc(c)+'</option>';}).join('')+'</select></div><div><label class="f">Tees</label><select class="f" data-act="rfield" data-k="tee">'+course.tees.map(function(t){return '<option'+(t.name===r.tee?' selected':'')+'>'+esc(t.name)+(t.slope?' · '+t.rating+'/'+t.slope:' · no slope published')+'</option>';}).join('')+'</select></div>';
+  h += '<div><label class="f">Slope (override)</label><input class="f" inputmode="decimal" placeholder="'+esc(tee.slope||'from card')+'" value="'+esc(r.slopeOverride||'')+'" data-act="rfield" data-k="slopeOverride"></div><div><label class="f">Rating (override)</label><input class="f" inputmode="decimal" placeholder="'+esc(tee.rating||'from card')+'" value="'+esc(r.ratingOverride===undefined||r.ratingOverride===null?'':r.ratingOverride)+'" data-act="rfield" data-k="ratingOverride"></div>';
+  h += '<div><label class="f">LD holes</label><input class="f" value="'+esc((r.ldHoles&&r.ldHoles.length?r.ldHoles:cr.ldHoles).join(','))+'" data-act="rfield" data-k="ldHoles"></div><div><label class="f">CP holes</label><input class="f" value="'+esc((r.cpHoles&&r.cpHoles.length?r.cpHoles:cr.cpHoles).join(','))+'" data-act="rfield" data-k="cpHoles"></div></div>';
+  h += '<div class="btnrow"><button class="btn '+(r.locked?'':'primary')+'" data-act="lock">'+(r.locked?'Unlock round':'Lock round (final)')+'</button></div>';
+  if (!cr.complete) h += '<div class="muted" style="font-size:12px;margin-top:6px">Round not complete — '+cr.groups.map(function(g){return 'Group '+g.id+' through hole '+g.lastPlayed;}).join(', ')+'.</div>';
+  h += '</div>';
+  // draw
+  h += '<div class="card"><h2>Draw · Round '+r.n+'</h2>';
+  r.groups.forEach(function(g,gi){ h += '<h3>Group '+esc(g.id)+'</h3><div class="grid2">'+g.teams.map(function(t,ti){ return '<div><label class="f">Team '+(ti+1)+'</label>'+[0,1].map(function(k){ return '<select class="f" data-act="draw" data-g="'+gi+'" data-t="'+ti+'" data-k="'+k+'"><option value="">–</option>'+T().players.map(function(p){return '<option value="'+p.id+'"'+(t[k]===p.id?' selected':'')+'>'+esc(p.name)+'</option>';}).join('')+'</select>'; }).join('')+'</div>'; }).join('')+'</div>'; });
+  var used=[].concat.apply([],r.groups.map(function(g){return [].concat.apply([],g.teams);})), dup=used.filter(function(p,i){return used.indexOf(p)!==i;});
+  if (dup.length) h += '<div class="banner bad" style="margin-top:8px">Player in two places: '+dup.map(pname).map(esc).join(', ')+'</div>';
+  h += '<div class="btnrow"><button class="btn" data-act="shuffle">Shuffle a draw</button><button class="btn" data-act="copy-draw">Copy yesterday\'s draw</button></div></div>';
+  // handicaps
+  h += '<div class="card"><h2>Handicaps · Round '+r.n+'</h2><div class="muted" style="font-size:13px;margin-bottom:6px">Index for the day → playing handicap off '+esc(r.tee)+' ('+(cr.slope?'slope '+cr.slope+', rating '+cr.rating:'no slope — index used as is')+'). Override if the committee says so.</div><div class="tbl"><table><thead><tr><th style="text-align:left">Player</th><th>Index</th><th>Plays off</th><th>Override</th></tr></thead><tbody>';
+  T().players.forEach(function(p){ var hi=cr.hc[p.id]; h += '<tr><td>'+esc(p.short||p.name)+'</td><td><input class="f sm" style="width:72px;text-align:right" inputmode="decimal" value="'+esc(hi.index===null||hi.index===undefined?'':hi.index)+'" data-act="index" data-p="'+p.id+'"></td><td class="num" style="font-weight:800;font-size:17px">'+(hi.playing===null?'–':hi.playing)+'</td><td><input class="f sm" style="width:64px;text-align:right" inputmode="numeric" placeholder="'+(hi.calc===null?'':hi.calc)+'" value="'+esc(hi.override===null||hi.override===undefined?'':hi.override)+'" data-act="hcov" data-p="'+p.id+'"></td></tr>'; });
+  h += '</tbody></table></div><div class="btnrow"><button class="btn sm" data-act="copy-index">Copy indexes from previous round</button></div></div>';
+  // carried pools
+  h += '<div class="card"><h2>Carried in · Round '+r.n+'</h2>';
+  if (!cr.carriedIn) h += '<div class="muted" style="font-size:13px">Nothing carried in'+(S.ui.r>0?' — previous round not complete yet':'')+'.</div>';
+  else h += '<div class="muted" style="font-size:13px">Pooled from the previous round: '+CATS.map(function(k){return CATN[k]+' '+frac(cr.carriedIn[k]);}).join(' · ')+' → split between '+r.groups.length+' groups.</div>';
+  h += '<div class="tbl"><table><thead><tr><th style="text-align:left">Group</th>'+CATS.map(function(k){return '<th>'+CATN[k]+'</th>';}).join('')+'</tr></thead><tbody>'+cr.groups.map(function(g,gi){ var G_=r.groups[gi]; return '<tr><td>'+esc(g.id)+'</td>'+CATS.map(function(k){ var ov=G_.carriedOverride&&G_.carriedOverride[k]; return '<td><input class="f sm" style="width:58px;text-align:right" inputmode="decimal" placeholder="'+frac(g.carriedShare[k])+'" value="'+(ov===undefined||ov===null?'':ov)+'" data-act="carry" data-g="'+gi+'" data-k="'+k+'"></td>'; }).join('')+'</tr>'; }).join('')+'</tbody></table></div><div class="muted" style="font-size:11px;margin-top:4px">Blank = the computed share. Type a number to override.</div></div>';
+  // players
+  h += '<div class="card"><h2>Players</h2><div class="tbl"><table><thead><tr><th style="text-align:left">Name</th><th>Short</th><th></th></tr></thead><tbody>'+T().players.map(function(p){ return '<tr><td><input class="f sm" value="'+esc(p.name)+'" data-act="pname" data-p="'+p.id+'"></td><td><input class="f sm" style="width:80px" value="'+esc(p.short||'')+'" data-act="pshort" data-p="'+p.id+'"></td><td><button class="btn sm danger" data-act="pdel" data-p="'+p.id+'">✕</button></td></tr>'; }).join('')+'</tbody></table></div><div class="btnrow"><button class="btn" data-act="padd">Add player</button></div></div>';
+  // share + data
+  h += '<div class="card"><h2>Share standings</h2><p class="muted" style="font-size:14px;margin:0 0 8px">A read-only snapshot of everything, for the group chat. Also what scorers open the night before to get the draw and handicaps.</p><div class="btnrow"><button class="btn primary" data-act="share-link">Copy standings link</button><button class="btn" data-act="share-native">Share…</button><button class="btn" data-act="share-qr">'+(S.ui.shareQR?'Hide QR':'Show QR')+'</button></div><div class="qr" id="shareqr" '+(S.ui.shareQR?'':'hidden')+'></div></div>';
+  h += '<div class="card"><h2>Data</h2><div class="btnrow"><button class="btn" data-act="tname">Rename tournament</button><button class="btn danger" data-act="clear-scores">Clear all scores</button><button class="btn danger" data-act="reset-example">Reset to example</button>'+(T().example?'<button class="btn primary" data-act="start-real">Start the real thing</button>':'')+'</div><div class="muted" style="font-size:12px;margin-top:6px">“Start the real thing” keeps players, courses and rounds; wipes example scores and handicaps.</div></div>';
+  return h;
+}
+function snapshotPayload(){ var T_=JSON.parse(JSON.stringify(T())); delete T_.courses; return { v:1, kind:'snapshot', at:new Date().toISOString(), T:T_ }; }
+var _shareLink='';
+function drawShareQR(){ var box=$('shareqr'); if(!box) return; box.innerHTML=''; packJSON(snapshotPayload()).then(function(s){ _shareLink=location.origin+location.pathname+'#view='+s; try { new QRCode(box,{text:_shareLink,width:236,height:236,correctLevel:QRCode.CorrectLevel.L}); } catch(e){ box.innerHTML='<div class="muted">Too much data for a QR — use the link.</div>'; } }); }
+
+/* ----- Rules ----- */
+function rulesHtml(){
+  return '<div class="card rules"><h2>Competition rules</h2>'
+  +'<p><b>Stableford team skins.</b> The trophy goes to the single player with the most skins over the week. Teams of two, redrawn every night at dinner. Breakfast ball on the 1st and 10th.</p>'
+  +'<h3>Every hole (per group of four)</h3><ul>'
+  +'<li><b>Hole skin — 1.</b> Team whose player has the best Stableford on the hole. Tied → carries to the next hole (hole 2 worth 2, and so on).</li>'
+  +'<li><b>Snake.</b> Worth 1 on hole 1, then +1 every hole it doesn\'t go off, <b>capped at 9</b>. A snake putt is the group\'s furthest-from-the-pin first putt since reaching the green, more than 6 ft, holed — and the hole must be completed (no pick-up). Sunk → that team takes the value; next hole it\'s worth 1 again.</li>'
+  +'<li><b>Birdie — 1.</b> Gross, regardless of handicap.</li>'
+  +'<li><b>Eagle — whatever the snake is worth</b> on that hole for that group. Does not reset the snake. Gross.</li>'
+  +'<li><b>Ferret — 2.</b> Holed from off the green without a putter.</li>'
+  +'<li><b>Longest drive — 1</b> on every par 5 (minimum four; longest par 4s fill in). Must hit the fairway. Nobody does → rolls to the next LD hole.</li>'
+  +'<li><b>Closest to pin — 1</b> on every par 3 (minimum four; shortest par 4s fill in). Must hit the green. Nobody does → rolls to the next CP hole.</li>'
+  +'<li><b>Hole in one</b> — free drinks for the rest of the trip, plus one entire following trip.</li></ul>'
+  +'<h3>End of each day</h3><ul>'
+  +'<li>Everything won on the course is the <b>team\'s</b>. Halved between the pair at the end of the day.</li>'
+  +'<li>Then the <b>daily Stableford ladder</b>: 7 · 6 · 5 · 4 · 3 · 2 · 1 · 0 skins to the individuals, best score first. Ties split the places.</li>'
+  +'<li>Everything unwon — hole skins, snake, LDs, CPs — is pooled across both groups and <b>split evenly between the next day\'s groups</b>. Halves are fine. Each share sits on the first hole of its kind the next day and rolls until it\'s won.</li></ul>'
+  +'<h3>Handicaps</h3><p>The commissioner sets each player\'s index for the day (and may adjust aggressively). Playing handicap = index × slope ÷ 113 + (rating − par), rounded — the GA daily handicap. Strokes fall by stroke index. Stableford: net double bogey 0, bogey 1, par 2, birdie 3, eagle 4.</p>'
+  +'<h3>Money</h3><p>Entry $150. 1st $1,050 · 2nd $150. Skins left unwon after round 5: to be decided.</p>'
+  +'<h3>Scoring</h3><p>One scorer per group each day, on their own phone, live or at the end of the round. Hand in by QR. The commissioner\'s copy is the master and can correct anything before locking the day.</p></div>';
+}
+
+/* ---------- actions ---------- */
+document.addEventListener('click', function(ev){
+  var el = ev.target.closest('[data-act],[data-tab]'); if(!el) return;
+  if (el.dataset.tab){ S.ui.tab=el.dataset.tab; save(); render(); return; }
+  var a=el.dataset.act, r=R();
+  if (a==='round'){ S.ui.r=+el.dataset.i; S.ui.g=0; S.ui.hole = firstOpenHole(); save(); render(); }
+  else if (a==='group'){ S.ui.g=+el.dataset.i; S.ui.hole = firstOpenHole(); save(); render(); }
+  else if (a==='mode'){ S.ui.mode = S.ui.mode==='grid'?'live':'grid'; save(); render(); }
+  else if (a==='hole'){ S.ui.hole=+el.dataset.h; save(); render(); window.scrollTo(0,0); }
+  else if (a==='bump'){ bump(+el.dataset.h, el.dataset.p, +el.dataset.d); }
+  else if (a==='pickup'){ togglePickup(+el.dataset.h, el.dataset.p); }
+  else if (a==='ev'){ setEvent(+el.dataset.h, el.dataset.k, el.dataset.p); }
+  else if (a==='copy-handin'){ copy(_hiLink,'Link copied'); }
+  else if (a==='share-handin'){ shareText('Round '+r.n+' Group '+G().id+' card', _hiLink); }
+  else if (a==='copy-backup'){ copy(JSON.stringify({v:1,kind:'backup',at:new Date().toISOString(),T:T(),ui:S.ui}),'Backup copied'); }
+  else if (a==='restore'){ $('restore-box').hidden=false; }
+  else if (a==='restore-go'){ restore($('restore-txt').value); }
+  else if (a==='merge'){ mergeIncoming(); }
+  else if (a==='discard'){ S.incoming=null; render(); }
+  else if (a==='ro-load'){ if (confirm('Replace the data on this phone with the commissioner\'s snapshot?'+localExtraWarning())) { S.ro=false; save(); toast('Loaded'); history.replaceState(null,'',location.pathname); render(); } }
+  else if (a==='commish-toggle'){ S.ui.commish=el.checked; save(); render(); }
+  else if (a==='lock'){ r.locked=!r.locked; save(); render(); }
+  else if (a==='shuffle'){ shuffleDraw(); }
+  else if (a==='copy-draw'){ if(S.ui.r>0){ r.groups=JSON.parse(JSON.stringify(T().rounds[S.ui.r-1].groups)).map(function(g){ g.holes={}; delete g.handedIn; delete g.carriedOverride; return g; }); save(); render(); } }
+  else if (a==='copy-index'){ if(S.ui.r>0){ r.index=Object.assign({}, T().rounds[S.ui.r-1].index); save(); render(); } }
+  else if (a==='padd'){ var nm=prompt('Player name'); if(nm){ var id='p'+Date.now().toString(36); T().players.push({id:id,name:nm,short:nm.split(' ')[0]}); T().rounds.forEach(function(x){ x.index=x.index||{}; }); save(); render(); } }
+  else if (a==='pdel'){ if(confirm('Remove '+pname(el.dataset.p)+'?')){ var id=el.dataset.p; T().players=T().players.filter(function(p){return p.id!==id;}); T().rounds.forEach(function(x){ x.groups.forEach(function(g){ g.teams=g.teams.map(function(t){return t.filter(function(p){return p!==id;});}); }); }); save(); render(); } }
+  else if (a==='share-link'){ packJSON(snapshotPayload()).then(function(s){ _shareLink=location.origin+location.pathname+'#view='+s; copy(_shareLink,'Standings link copied ('+_shareLink.length+' chars)'); }); }
+  else if (a==='share-native'){ packJSON(snapshotPayload()).then(function(s){ _shareLink=location.origin+location.pathname+'#view='+s; shareText(T().name+' — standings', _shareLink); }); }
+  else if (a==='share-qr'){ S.ui.shareQR=!S.ui.shareQR; save(); render(); }
+  else if (a==='tname'){ var n=prompt('Tournament name', T().name); if(n){ T().name=n; save(); render(); } }
+  else if (a==='clear-scores'){ if(confirm('Clear every score in every round? Players, draw and handicaps stay.')){ T().rounds.forEach(function(x){ x.locked=false; x.groups.forEach(function(g){ g.holes={}; }); }); save(); render(); } }
+  else if (a==='reset-example'){ if(confirm('Replace everything with the example data?')){ S.T=exampleTournament(); S.ui.r=0; save(); render(); } }
+  else if (a==='start-real'){ if(confirm('Wipe the example scores and handicaps and start the real tournament?')){ S.T=emptyTournament(); S.T.rounds.forEach(function(x){ x.index={}; x.groups.forEach(function(g){ g.teams=[[],[]]; }); }); S.ui.r=0; S.ui.commish=true; save(); toast('Ready — set the draw and handicaps'); render(); } }
+});
+document.addEventListener('change', function(ev){
+  var el=ev.target.closest('[data-act]'); if(!el) return; var a=el.dataset.act, r=R();
+  if (a==='gcell'){ var v=el.value.trim().toUpperCase(); var g=G(); if(!canEdit(r)) return; var e=ensureHole(g,+el.dataset.h); if(v==='') delete e.gross[el.dataset.p]; else if(v==='P') e.gross[el.dataset.p]='P'; else if(/^\d+$/.test(v)&&+v>0) e.gross[el.dataset.p]=+v; save(); render(); }
+  else if (a==='gsel'){ var g2=G(); if(!canEdit(r)) return; var e2=ensureHole(g2,+el.dataset.h); if(el.value) e2[el.dataset.k]=el.value; else delete e2[el.dataset.k]; save(); render(); }
+  else if (a==='rfield'){ var k=el.dataset.k, v2=el.value;
+    if (k==='ldHoles'||k==='cpHoles'){ r[k]=v2.split(/[,\s]+/).map(Number).filter(function(n){return n>=1&&n<=18;}); }
+    else if (k==='slopeOverride'||k==='ratingOverride'){ r[k]= v2===''?null:+v2; }
+    else if (k==='course'){ r.course=v2; var c=courseOf(r); if(!c.tees.some(function(t){return t.name===r.tee;})) r.tee=c.tees[0].name; r.ldHoles=[]; r.cpHoles=[]; }
+    else r[k]=v2; save(); render(); }
+  else if (a==='draw'){ var gi=+el.dataset.g, ti=+el.dataset.t, k2=+el.dataset.k; var t=r.groups[gi].teams[ti]; if(el.value) t[k2]=el.value; else t.splice(k2,1); r.groups[gi].teams[ti]=t.filter(Boolean); save(); render(); }
+  else if (a==='index'){ r.index=r.index||{}; if(el.value==='') delete r.index[el.dataset.p]; else r.index[el.dataset.p]=+el.value; save(); render(); }
+  else if (a==='hcov'){ r.hcOverride=r.hcOverride||{}; if(el.value==='') delete r.hcOverride[el.dataset.p]; else r.hcOverride[el.dataset.p]=+el.value; save(); render(); }
+  else if (a==='carry'){ var g3=r.groups[+el.dataset.g]; g3.carriedOverride=g3.carriedOverride||{}; if(el.value==='') delete g3.carriedOverride[el.dataset.k]; else g3.carriedOverride[el.dataset.k]=+el.value; save(); render(); }
+  else if (a==='pname'){ pl(el.dataset.p).name=el.value; save(); render(); }
+  else if (a==='pshort'){ pl(el.dataset.p).short=el.value; save(); render(); }
+});
+function firstOpenHole(){ var g=G(); if(!g) return 1; var all=[].concat.apply([],g.teams); for(var h=1;h<=18;h++){ var gr=(g.holes[h]||{}).gross||{}; if(!all.every(function(p){return E.isEntered(gr[p]);})) return h; } return 18; }
+function shuffleDraw(){ var r=R(), ids=T().players.map(function(p){return p.id;}); for(var i=ids.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=ids[i]; ids[i]=ids[j]; ids[j]=t; }
+  var per=Math.ceil(ids.length/r.groups.length); r.groups.forEach(function(g,gi){ var chunk=ids.slice(gi*per,(gi+1)*per); var half=Math.ceil(chunk.length/2); g.teams=[chunk.slice(0,half), chunk.slice(half)]; }); save(); render(); }
+function localExtraWarning(){ try { var raw=localStorage.getItem(KEY); if(!raw) return ''; var o=JSON.parse(raw); var n=0; o.T.rounds.forEach(function(r){ r.groups.forEach(function(g){ Object.keys(g.holes||{}).forEach(function(h){ if(Object.keys((g.holes[h]||{}).gross||{}).length) n++; }); }); }); return n?'\n\nThis phone has '+n+' scored holes. If any haven\'t been handed in yet, hand them in first.':''; } catch(e){ return ''; } }
+function copy(text,msg){ if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(function(){toast(msg);},function(){fallbackCopy(text,msg);}); else fallbackCopy(text,msg); }
+function fallbackCopy(text,msg){ var ta=document.createElement('textarea'); ta.value=text; document.body.appendChild(ta); ta.select(); try{ document.execCommand('copy'); toast(msg);}catch(e){ prompt('Copy this:',text);} document.body.removeChild(ta); }
+function shareText(title,url){ if(navigator.share) navigator.share({title:title,url:url}).catch(function(){}); else copy(url,'Link copied'); }
+function restore(txt){ txt=(txt||'').trim(); if(!txt) return; var m=/#(hi|view)=([A-Za-z0-9_\-]+)/.exec(txt); if(m){ unpackJSON(m[2]).then(function(o){ applyIncoming(o, m[1]); }).catch(function(){ toast('Could not read that link'); }); return; }
+  try { var o=JSON.parse(txt); if(o&&o.T&&o.T.rounds){ if(confirm('Restore this backup? Replaces everything on this phone.')){ S.T=o.T; S.T.courses=S.T.courses||COURSES; S.ui=Object.assign(S.ui,o.ui||{}); save(); toast('Restored'); render(); } } else toast('Not a backup'); } catch(e){ toast('Not a backup'); } }
+
+/* ---------- pack / unpack (deflate + base64url) ---------- */
+function b64u(bytes){ var s=''; for(var i=0;i<bytes.length;i++) s+=String.fromCharCode(bytes[i]); return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
+function ub64u(str){ str=str.replace(/-/g,'+').replace(/_/g,'/'); while(str.length%4) str+='='; var bin=atob(str), out=new Uint8Array(bin.length); for(var i=0;i<bin.length;i++) out[i]=bin.charCodeAt(i); return out; }
+function packJSON(obj){ var bytes=new TextEncoder().encode(JSON.stringify(obj));
+  if (!window.CompressionStream) return Promise.resolve('r'+b64u(bytes));
+  var cs=new CompressionStream('deflate-raw'); var w=cs.writable.getWriter(); w.write(bytes); w.close();
+  return new Response(cs.readable).arrayBuffer().then(function(buf){ return 'z'+b64u(new Uint8Array(buf)); }); }
+function unpackJSON(str){ var t=str[0], data=ub64u(str.slice(1));
+  if (t==='r') return Promise.resolve(JSON.parse(new TextDecoder().decode(data)));
+  if (!window.DecompressionStream) return Promise.reject(new Error('no inflate'));
+  var ds=new DecompressionStream('deflate-raw'); var w=ds.writable.getWriter(); w.write(data); w.close();
+  return new Response(ds.readable).arrayBuffer().then(function(buf){ return JSON.parse(new TextDecoder().decode(new Uint8Array(buf))); }); }
+function applyIncoming(o, kind){
+  if (o.kind==='handin'){ S.incoming=o; S.ui.tab='handin'; render(); }
+  else if (o.kind==='snapshot'){ S.ro=true; S.roAt=new Date(o.at).toLocaleString(); S.T=o.T; S.T.courses=COURSES; S.ui.tab='board'; S.ui.r=pickRound(); render(); }
+}
+
+/* ---------- boot ---------- */
+load();
+S.ui.r = Math.min(S.ui.r, T().rounds.length-1); if (S.ui.r<0) S.ui.r=0;
+if (!localStorage.getItem(KEY)) S.ui.r = pickRound();
+S.ui.hole = firstOpenHole();
+var tabm=/^#tab=(board|score|handin|commish|rules)(?::(grid|live))?$/.exec(location.hash||'');
+if (tabm){ S.ui.tab=tabm[1]; if(tabm[1]==='commish') S.ui.commish=true; if(tabm[2]) S.ui.mode=tabm[2]; history.replaceState(null,'',location.pathname); }
+var m=/^#(hi|view)=([A-Za-z0-9_\-]+)$/.exec(location.hash||'');
+if (m){ unpackJSON(m[2]).then(function(o){ applyIncoming(o,m[1]); history.replaceState(null,'',location.pathname); }).catch(function(){ toast('Could not read that link'); render(); }); }
+else render();
+if ('serviceWorker' in navigator && location.protocol.indexOf('http')===0) navigator.serviceWorker.register('sw.js').catch(function(){});
+})();
+</script>
+</body>
+</html>
