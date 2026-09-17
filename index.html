@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#1F6E43">
-<meta name="app-version" content="17m">
+<meta name="app-version" content="17n">
 <link rel="manifest" href="manifest.webmanifest">
 <title>Mission Hills Skins</title>
 <meta name="description" content="Team skins scorer for the Mission Hills 2026 trip — Stableford, snake, LD, CP, birdies, eagles, ferrets. Works offline.">
@@ -148,6 +148,8 @@ hr{border:0;border-top:1px solid var(--line);margin:12px 0}
 /* board */
 .stand td.nm{font-weight:700;text-align:left}
 td.nm{text-align:left}
+.ctr th:not(:first-child),.ctr td:not(:first-child){text-align:center}
+.ctr th.nm,.ctr td.nm{text-align:left}
 .stand td.tot{font-family:var(--mono);font-weight:800;font-size:17px}
 .stand tr.first td.tot{color:var(--green)}
 .stand td.r{font-family:var(--mono);font-size:13px;color:var(--muted)}
@@ -331,8 +333,8 @@ function dayCard(C,r,ri){
     if (g.complete) h += '<div class="muted" style="font-size:12px;margin-top:4px">Unwon: '+CATS.map(function(k){return CATN[k]+' '+frac(g.unwon[k]);}).join(' · ')+'</div>';
   });
   if (r.ladder){ var ids=Object.keys(r.ladder).sort(function(a,b){return r.ladder[a].place-r.ladder[b].place;});
-    h += '<h3>Stableford ladder</h3><div class="tbl"><table><thead><tr><th>#</th><th style="text-align:left">Player</th><th>Pts</th><th>Skins</th></tr></thead><tbody>'+ids.map(function(id){ var l=r.ladder[id]; return '<tr><td class="num muted">'+l.place+(l.tied?'=':'')+'</td><td class="nm">'+esc(pname(id))+'</td><td class="num">'+l.pts+'</td><td class="frac">'+frac(l.skins)+'</td></tr>'; }).join('')+'</tbody></table></div>';
-    h += '<h3>Day totals</h3><div class="muted" style="font-size:12px;margin:-4px 0 6px">Team = your half of what your pair won on the course · Personal contribution = the skins you personally won for the pair · S-PTS Skins = your Stableford ladder skins · Day total = Team + S-PTS, which is what goes on the trophy race.</div><div class="tbl"><table><thead><tr><th style="text-align:left">Player</th><th>Team</th><th>Personal contribution</th><th>S-PTS Skins</th><th>Day total</th></tr></thead><tbody>'+T().players.filter(function(p){return r.perPlayer[p.id].played;}).sort(function(a,b){return r.perPlayer[b.id].total-r.perPlayer[a.id].total;}).map(function(p){ var x=r.perPlayer[p.id]; return '<tr><td class="nm">'+esc(p.short||p.name)+'</td><td class="frac">'+frac(x.team)+'</td><td class="frac" style="font-weight:500">'+frac(x.contrib||0)+'</td><td class="frac">'+frac(x.ladder)+'</td><td class="frac">'+frac(x.total)+'</td></tr>'; }).join('')+'</tbody></table></div>';
+    h += '<h3>Stableford ladder</h3><div class="tbl"><table class="ctr"><thead><tr><th>#</th><th class="nm">Player</th><th>Pts</th><th>Skins</th></tr></thead><tbody>'+ids.map(function(id){ var l=r.ladder[id]; return '<tr><td class="num muted">'+l.place+(l.tied?'=':'')+'</td><td class="nm">'+esc(pname(id))+'</td><td class="num">'+l.pts+'</td><td class="frac">'+frac(l.skins)+'</td></tr>'; }).join('')+'</tbody></table></div>';
+    h += '<h3>Day totals</h3><div class="muted" style="font-size:12px;margin:-4px 0 6px">Team = your half of what your pair won on the course · Personal contribution = the skins you personally won for the pair · S-PTS Skins = your Stableford ladder skins · Day total = Team + S-PTS, which is what goes on the trophy race.</div><div class="tbl"><table class="ctr"><thead><tr><th class="nm">Player</th><th>Team</th><th>Personal contribution</th><th>S-PTS Skins</th><th>Day total</th></tr></thead><tbody>'+T().players.filter(function(p){return r.perPlayer[p.id].played;}).sort(function(a,b){return r.perPlayer[b.id].total-r.perPlayer[a.id].total;}).map(function(p){ var x=r.perPlayer[p.id]; return '<tr><td class="nm">'+esc(p.short||p.name)+'</td><td class="frac">'+frac(x.team)+'</td><td class="frac" style="font-weight:500">'+frac(x.contrib||0)+'</td><td class="frac">'+frac(x.ladder)+'</td><td class="frac">'+frac(x.total)+'</td></tr>'; }).join('')+'</tbody></table></div>';
   } else if (r.groups.some(function(g){return g.lastPlayed>0;})) h += '<div class="muted" style="font-size:12px;margin-top:8px">Ladder is worked out once both groups have 18 holes in.</div>';
   return h+'</div>';
 }
