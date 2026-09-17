@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#1F6E43">
-<meta name="app-version" content="17j">
+<meta name="app-version" content="17k">
 <link rel="manifest" href="manifest.webmanifest">
 <title>Mission Hills Skins</title>
 <meta name="description" content="Team skins scorer for the Mission Hills 2026 trip — Stableford, snake, LD, CP, birdies, eagles, ferrets. Works offline.">
@@ -323,6 +323,8 @@ function dayCard(C,r,ri){
   if (r.frozen) h += '<div class="muted" style="font-size:12px;margin-top:6px">Summary only on this phone — the full card is on the commissioner\'s standings link.</div>';
   r.groups.forEach(function(g){
     h += '<h3>Group '+esc(g.id)+' <span class="muted" style="font-weight:400">· '+(g.complete?'18 holes':g.lastPlayed?'through hole '+g.lastPlayed:'not started')+'</span></h3>';
+    var ci = g.carried || {hole:0,snake:0,ld:0,cp:0};
+    h += '<div class="muted" style="font-size:12px;margin:-2px 0 6px">Carried in: '+CATS.map(function(k){return CATN[k]+' '+frac(ci[k]||0);}).join(' · ')+'</div>';
     h += '<div class="teamsum">'+g.teams.map(function(t,i){ return '<div class="t'+(i?' r':'')+'">'+t.map(pname).map(esc).join(' &amp; ')+'<br>'+(g.lastPlayed?'<span class="s">'+frac(g.teamSkins[i])+'</span> <span class="muted" style="font-size:12px">→ '+frac(g.teamSkins[i]/(t.length||1))+' each</span>':'<span class="muted" style="font-size:12px">—</span>')+'</div>'+(i===0?'<div class="muted">v</div>':''); }).join('')+'</div>';
     if (g.events.length) h += '<details><summary>'+g.events.length+' skins events</summary><ul class="evlist">'+g.events.map(function(e){ return '<li><span>H'+e.hole+' · '+evName(e)+'</span><span>'+frac(e.value)+' → '+esc(g.teams[e.team].map(pname).join(' & '))+'</span></li>'; }).join('')+'</ul></details>';
     if (g.complete) h += '<div class="muted" style="font-size:12px;margin-top:4px">Unwon: '+CATS.map(function(k){return CATN[k]+' '+frac(g.unwon[k]);}).join(' · ')+'</div>';
@@ -651,8 +653,9 @@ load();
 S.ui.r = Math.min(S.ui.r, T().rounds.length-1); if (S.ui.r<0) S.ui.r=0;
 if (!localStorage.getItem(KEY)) S.ui.r = pickRound();
 S.ui.hole = firstOpenHole();
-var tabm=/^#tab=(board|score|handin|commish|rules)(?::(grid|live|qr))?$/.exec(location.hash||'');
-if (tabm){ S.ui.tab=tabm[1]; if(tabm[1]==='commish') S.ui.commish=true; if(tabm[2]==='qr') S.ui.shareQR=true; else if(tabm[2]) S.ui.mode=tabm[2]; history.replaceState(null,'',location.pathname); }
+var tabm=/^#tab=(board|score|handin|commish|rules)(?::(grid|live|qr))?(?::r(\d))?(?::g(\d))?(?::h(\d+))?(?::(c))?$/.exec(location.hash||'');
+if (tabm){ S.ui.tab=tabm[1]; if(tabm[1]==='commish'||tabm[6]) S.ui.commish=true; if(tabm[2]==='qr') S.ui.shareQR=true; else if(tabm[2]) S.ui.mode=tabm[2];
+  if(tabm[3]) S.ui.r=Math.max(0,+tabm[3]-1); if(tabm[4]) S.ui.g=Math.max(0,+tabm[4]-1); if(tabm[5]) S.ui.hole=+tabm[5]; history.replaceState(null,'',location.pathname); }
 var m=/^#(hi|view)=([A-Za-z0-9_\-]+)$/.exec(location.hash||'');
 if (m){ unpackJSON(m[2]).then(function(o){ applyIncoming(o,m[1]); history.replaceState(null,'',location.pathname); }).catch(function(){ toast('Could not read that link'); render(); }); }
 else render();
