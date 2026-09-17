@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#1F6E43">
-<meta name="app-version" content="17d">
+<meta name="app-version" content="17e">
 <link rel="manifest" href="manifest.webmanifest">
 <title>Mission Hills Skins</title>
 <meta name="description" content="Team skins scorer for the Mission Hills 2026 trip — Stableford, snake, LD, CP, birdies, eagles, ferrets. Works offline.">
@@ -271,8 +271,8 @@ function setEvent(h,key,pid){ var r=R(),g=G(); if(!canEdit(r)) return; var e=ens
 
 /* ---------- views ---------- */
 function render(){
-  var tab = S.ui.tab; if (S.ro && (tab==='handin'||tab==='commish')) tab='board';
-  Array.prototype.forEach.call($('tabs').children, function(b){ b.setAttribute('aria-selected', String(b.dataset.tab===tab)); b.hidden = S.ro && (b.dataset.tab==='handin'||b.dataset.tab==='commish'); });
+  var tab = S.ui.tab;
+  Array.prototype.forEach.call($('tabs').children, function(b){ b.setAttribute('aria-selected', String(b.dataset.tab===tab)); });
   var C = calc(); var r=R();
   $('appname').textContent = T().name || 'Mission Hills Skins';
   $('ctx').innerHTML = r ? 'R'+r.n+' · '+esc(r.course)+'<br>'+esc(fmtDate(r.date))+(r.teeTime?' · '+esc(r.teeTime):'') : '';
@@ -280,7 +280,8 @@ function render(){
   if (S.incoming) html += incomingHtml();
   if (S.ro) html += '<div class="banner info"><b>'+(S.roSetup?'Setup from the commissioner':'Read-only standings')+'</b>'+(S.roAt?' · '+esc(S.roAt):'')+'. '+(S.roSetup?'Load it and you\'re ready to score.':'')+'<div class="btnrow"><button class="btn primary sm" data-act="ro-load">Load into my app</button><button class="btn sm" data-act="ro-dismiss">Just look</button></div></div>';
   else if (T().example) html += '<div class="banner warn"><b>Example data.</b> Scores and handicaps are made up so you can poke at it. Commish → Data → “Start the real thing” when ready.</div>';
-  html += tab==='board'?boardHtml(C): tab==='score'?scoreHtml(C): tab==='handin'?handinHtml(C): tab==='commish'?commishHtml(C): rulesHtml();
+  if (S.ro && (tab==='handin'||tab==='commish')) html += '<div class="card"><h2>'+(tab==='handin'?'Hand in':'Commissioner')+'</h2><p class="muted" style="margin:0">You\'re looking at a snapshot someone shared, not your own copy. Tap <b>Load into my app</b> above to make it yours, or <b>Just look</b> to go back to your own copy — then this tab works as normal.</p></div>';
+  else html += tab==='board'?boardHtml(C): tab==='score'?scoreHtml(C): tab==='handin'?handinHtml(C): tab==='commish'?commishHtml(C): rulesHtml();
   $('main').innerHTML = html;
   if (tab==='handin' && !S.ro) drawQR();
   if (tab==='commish' && S.ui.shareQR) drawShareQR();
