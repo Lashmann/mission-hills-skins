@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#1F6E43">
-<meta name="app-version" content="17f">
+<meta name="app-version" content="17g">
 <link rel="manifest" href="manifest.webmanifest">
 <title>Mission Hills Skins</title>
 <meta name="description" content="Team skins scorer for the Mission Hills 2026 trip — Stableford, snake, LD, CP, birdies, eagles, ferrets. Works offline.">
@@ -137,6 +137,14 @@ hr{border:0;border-top:1px solid var(--line);margin:12px 0}
 .gridtbl td:first-child{font-weight:700;text-align:left}
 .gridtbl .ldcp{font-size:9px;color:var(--blue);display:block;font-weight:700}
 
+/* draw */
+.draw{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:560px){.draw{grid-template-columns:1fr}}
+.dgroup{border:1px solid var(--line);border-radius:10px;padding:10px;background:var(--surface-2)}
+.dpair{display:flex;gap:6px;align-items:center}
+.dlbl{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);width:44px}
+.dslot{flex:1;min-height:44px;border:1px dashed var(--line);border-radius:8px;background:var(--surface);font-weight:700;font-size:15px;padding:8px 6px;color:var(--muted)}
+.dslot.filled{border-style:solid;border-color:var(--green);background:var(--green-bg);color:var(--green)}
 /* board */
 .stand td.nm{font-weight:700}
 .stand td.tot{font-family:var(--mono);font-weight:800;font-size:17px}
@@ -433,12 +441,14 @@ function commishHtml(C){
   h += '<div class="btnrow"><button class="btn '+(r.locked?'':'primary')+'" data-act="lock">'+(r.locked?'Unlock round':'Lock round (final)')+'</button></div>';
   if (!cr.complete) h += '<div class="muted" style="font-size:12px;margin-top:6px">Round not complete — '+cr.groups.map(function(g){return 'Group '+g.id+' through hole '+g.lastPlayed;}).join(', ')+'.</div>';
   h += '</div>';
-  // draw
-  h += '<div class="card"><h2>Draw · Round '+r.n+'</h2>';
-  r.groups.forEach(function(g,gi){ h += '<h3>Group '+esc(g.id)+'</h3><div class="grid2">'+g.teams.map(function(t,ti){ return '<div><label class="f">Team '+(ti+1)+'</label>'+[0,1].map(function(k){ return '<select class="f" data-act="draw" data-g="'+gi+'" data-t="'+ti+'" data-k="'+k+'"><option value="">–</option>'+T().players.map(function(p){return '<option value="'+p.id+'"'+(t[k]===p.id?' selected':'')+'>'+esc(p.name)+'</option>';}).join('')+'</select>'; }).join('')+'</div>'; }).join('')+'</div>'; });
-  var used=[].concat.apply([],r.groups.map(function(g){return [].concat.apply([],g.teams);})), dup=used.filter(function(p,i){return used.indexOf(p)!==i;});
-  if (dup.length) h += '<div class="banner bad" style="margin-top:8px">Player in two places: '+dup.map(pname).map(esc).join(', ')+'</div>';
-  h += '<div class="btnrow"><button class="btn" data-act="shuffle">Shuffle a draw</button><button class="btn" data-act="copy-draw">Copy yesterday\'s draw</button></div></div>';
+  // draw: tap a name, it drops into the next empty spot
+  var used=[].concat.apply([],r.groups.map(function(g){return [].concat.apply([],g.teams);}));
+  h += '<div class="card"><h2>Draw · Round '+r.n+'</h2><p class="muted" style="font-size:13px;margin:0 0 10px">Tap a name below and it drops into the next empty spot. Tap a filled spot to clear it.</p><div class="draw">';
+  r.groups.forEach(function(g,gi){ h += '<div class="dgroup"><div class="eyebrow" style="margin-bottom:6px">Group '+esc(g.id)+'</div>'+g.teams.map(function(t,ti){ return '<div class="dpair"><span class="dlbl">Pair '+(ti+1)+'</span>'+[0,1].map(function(k){ var p=t[k]; return '<button type="button" class="dslot'+(p?' filled':'')+'" data-act="slot" data-g="'+gi+'" data-t="'+ti+'" data-k="'+k+'">'+(p?esc(pname(p)):'—')+'</button>'; }).join('')+'</div>'+(ti===0?'<div class="muted" style="text-align:center;font-size:12px;margin:2px 0">v</div>':''); }).join('')+'</div>'; });
+  h += '</div><div class="chips" style="margin-top:10px">'+T().players.map(function(p){ var on=used.indexOf(p.id)>=0; return '<button type="button" class="chip" '+(on?'disabled style="opacity:.35"':'')+' data-act="pick" data-p="'+p.id+'">'+esc(p.short||p.name)+'</button>'; }).join('')+'</div>';
+  var missing = T().players.length - used.length;
+  h += '<div class="muted" style="font-size:12px;margin-top:6px">'+(missing>0 ? missing+' still to place.' : missing<0 ? 'More spots than players — a spot can stay empty.' : 'Everyone placed.')+'</div>';
+  h += '<div class="btnrow"><button class="btn" data-act="shuffle">Shuffle a draw</button><button class="btn" data-act="clear-draw">Clear draw</button>'+(S.ui.r>0?'<button class="btn" data-act="copy-draw">Copy yesterday\'s draw</button>':'')+'</div></div>';
   // handicaps
   h += '<div class="card"><h2>Handicaps · Round '+r.n+'</h2><div class="muted" style="font-size:13px;margin-bottom:6px">Index for the day → playing handicap off '+esc(r.tee)+' ('+(cr.slope?'slope '+cr.slope+', rating '+cr.rating:'no slope — index used as is')+'). Override if the committee says so.</div><div class="tbl"><table><thead><tr><th style="text-align:left">Player</th><th>Index</th><th>Plays off</th><th>Override</th></tr></thead><tbody>';
   T().players.forEach(function(p){ var hi=cr.hc[p.id]; h += '<tr><td>'+esc(p.short||p.name)+'</td><td><input class="f sm" style="width:72px;text-align:right" inputmode="decimal" value="'+esc(hi.index===null||hi.index===undefined?'':hi.index)+'" data-act="index" data-p="'+p.id+'"></td><td class="num" style="font-weight:800;font-size:17px">'+(hi.playing===null?'–':hi.playing)+'</td><td><input class="f sm" style="width:64px;text-align:right" inputmode="numeric" placeholder="'+(hi.calc===null?'':hi.calc)+'" value="'+esc(hi.override===null||hi.override===undefined?'':hi.override)+'" data-act="hcov" data-p="'+p.id+'"></td></tr>'; });
@@ -549,6 +559,9 @@ document.addEventListener('click', function(ev){
   else if (a==='check-update'){ if(!('serviceWorker' in navigator)){ toast('Not installed as an app'); return; } navigator.serviceWorker.getRegistration().then(function(reg){ if(!reg){ toast('No update service'); return; } reg.update().then(function(){ toast('Checked — an update reloads the app by itself'); }).catch(function(){ toast('No signal'); }); }); }
   else if (a==='lock'){ r.locked=!r.locked; save(); render(); }
   else if (a==='shuffle'){ shuffleDraw(); }
+  else if (a==='clear-draw'){ r.groups.forEach(function(g){ g.teams=g.teams.map(function(){ return []; }); }); save(); render(); }
+  else if (a==='slot'){ var gs=r.groups[+el.dataset.g], ts=gs.teams[+el.dataset.t]; ts.splice(+el.dataset.k,1); gs.teams[+el.dataset.t]=ts.filter(Boolean); save(); render(); }
+  else if (a==='pick'){ var placed=false; r.groups.forEach(function(g){ g.teams.forEach(function(t){ if(!placed && t.length<2){ t.push(el.dataset.p); placed=true; } }); }); if(!placed) toast('Every spot is full — clear one first'); save(); render(); }
   else if (a==='copy-draw'){ if(S.ui.r>0){ r.groups=JSON.parse(JSON.stringify(T().rounds[S.ui.r-1].groups)).map(function(g){ g.holes={}; delete g.handedIn; delete g.carriedOverride; return g; }); save(); render(); } }
   else if (a==='copy-index'){ if(S.ui.r>0){ r.index=Object.assign({}, T().rounds[S.ui.r-1].index); save(); render(); } }
   else if (a==='padd'){ var nm=prompt('Player name'); if(nm){ var id='p'+Date.now().toString(36); T().players.push({id:id,name:nm,short:nm.split(' ')[0]}); T().rounds.forEach(function(x){ x.index=x.index||{}; }); save(); render(); } }
@@ -571,7 +584,6 @@ document.addEventListener('change', function(ev){
     else if (k==='slopeOverride'||k==='ratingOverride'){ r[k]= v2===''?null:+v2; }
     else if (k==='course'){ r.course=v2; var c=courseOf(r); if(!c.tees.some(function(t){return t.name===r.tee;})) r.tee=c.tees[0].name; r.ldHoles=[]; r.cpHoles=[]; }
     else r[k]=v2; save(); render(); }
-  else if (a==='draw'){ var gi=+el.dataset.g, ti=+el.dataset.t, k2=+el.dataset.k; var t=r.groups[gi].teams[ti]; if(el.value) t[k2]=el.value; else t.splice(k2,1); r.groups[gi].teams[ti]=t.filter(Boolean); save(); render(); }
   else if (a==='index'){ r.index=r.index||{}; if(el.value==='') delete r.index[el.dataset.p]; else r.index[el.dataset.p]=+el.value; save(); render(); }
   else if (a==='hcov'){ r.hcOverride=r.hcOverride||{}; if(el.value==='') delete r.hcOverride[el.dataset.p]; else r.hcOverride[el.dataset.p]=+el.value; save(); render(); }
   else if (a==='carry'){ var g3=r.groups[+el.dataset.g]; g3.carriedOverride=g3.carriedOverride||{}; if(el.value==='') delete g3.carriedOverride[el.dataset.k]; else g3.carriedOverride[el.dataset.k]=+el.value; save(); render(); }
