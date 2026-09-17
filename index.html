@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#1F6E43">
-<meta name="app-version" content="17h">
+<meta name="app-version" content="17i">
 <link rel="manifest" href="manifest.webmanifest">
 <title>Mission Hills Skins</title>
 <meta name="description" content="Team skins scorer for the Mission Hills 2026 trip — Stableford, snake, LD, CP, birdies, eagles, ferrets. Works offline.">
@@ -227,10 +227,13 @@ function exampleTournament(){
     { n:4, date:'2026-12-03', course:'Vijay',    tee:'Blue', teeTime:'09:52' },
     { n:5, date:'2026-12-04', course:'Norman',   tee:'Blue', teeTime:'08:00' } ];
   rounds.forEach(function(r){ r.index = Object.assign({}, idx); r.hcOverride = {}; r.groups = [{id:'A', teams:[[],[]], holes:{}}, {id:'B', teams:[[],[]], holes:{}}]; r.locked=false; });
+  // a rotation where no two players are paired twice across the week
   rounds[0].groups[0].teams = [['danny','lachlan'],['micks','elliot']]; rounds[0].groups[1].teams = [['dale','zac'],['poss','slim']];
-  rounds[1].groups[0].teams = [['danny','poss'],['dale','elliot']];     rounds[1].groups[1].teams = [['lachlan','slim'],['micks','zac']];
+  rounds[1].groups[0].teams = [['danny','micks'],['dale','poss']];      rounds[1].groups[1].teams = [['lachlan','zac'],['elliot','slim']];
+  rounds[2].groups[0].teams = [['danny','zac'],['lachlan','poss']];     rounds[2].groups[1].teams = [['micks','slim'],['elliot','dale']];
+  rounds[3].groups[0].teams = [['danny','poss'],['lachlan','elliot']];  rounds[3].groups[1].teams = [['micks','dale'],['zac','slim']];
   var T = { name:'Mission Hills 2026', example:true, entry:150, prizes:[1050,150], players:players, courses:COURSES, rules:{}, rounds:rounds };
-  // score round 1 fully and round 2 group A to hole 6, with believable numbers
+  // three full rounds played and locked; round 4 drawn for tomorrow; round 5 not yet drawn
   var R = rng(20261129);
   function scoreGroup(round, g, upTo){
     var course = COURSES[round.course], tee = course.tees.filter(function(t){return t.name===round.tee;})[0];
@@ -243,12 +246,11 @@ function exampleTournament(){
       if (sp.ld.indexOf(h)>=0 && R()<0.8) e.ld = all[Math.floor(R()*all.length)];
       if (sp.cp.indexOf(h)>=0 && R()<0.7) e.cp = all[Math.floor(R()*all.length)];
       if (h===11 && g.id==='A' && round.n===1) e.ferret = all[1];
+      if (h===7 && g.id==='B' && round.n===3) e.ferret = all[2];
       g.holes[h]=e;
     }
   }
-  scoreGroup(rounds[0], rounds[0].groups[0], 18); scoreGroup(rounds[0], rounds[0].groups[1], 18);
-  rounds[0].locked = true;
-  scoreGroup(rounds[1], rounds[1].groups[0], 6);
+  [0,1,2].forEach(function(ri){ scoreGroup(rounds[ri], rounds[ri].groups[0], 18); scoreGroup(rounds[ri], rounds[ri].groups[1], 18); rounds[ri].locked = true; });
   return T;
 }
 // A clean tournament: real players, courses, dates and tee times — no scores, no handicaps, no draw. What a fresh install starts with.
@@ -257,7 +259,7 @@ function isFresh(T_){ return !T_.example && T_.rounds.every(function(r){ return 
 
 /* ---------- state ---------- */
 var S = { T:null, ui:{ tab:'board', r:0, g:0, hole:1, mode:'live', commish:false, open:{} }, ro:false, incoming:null };
-function load(){ try { var raw=localStorage.getItem(KEY); if(raw){ var o=JSON.parse(raw); if(o&&o.T&&o.T.rounds){ S.T=o.T; S.ui=Object.assign(S.ui,o.ui||{}); S.T.courses = S.T.courses||COURSES; return; } } } catch(e){} S.T = emptyTournament(); }
+function load(){ try { var raw=localStorage.getItem(KEY); if(raw){ var o=JSON.parse(raw); if(o&&o.T&&o.T.rounds){ S.T=o.T; S.ui=Object.assign(S.ui,o.ui||{}); S.T.courses = S.T.courses||COURSES; return; } } } catch(e){} S.T = exampleTournament(); }
 function save(){ if (S.ro) return; try { localStorage.setItem(KEY, JSON.stringify({T:S.T, ui:S.ui})); } catch(e){ toast('Could not save — storage blocked'); } }
 function T(){ return S.T; } function R(){ return T().rounds[S.ui.r]; } function G(){ var r=R(); return r&&r.groups[S.ui.g]; }
 function pl(id){ return T().players.filter(function(p){return p.id===id;})[0] || {id:id,name:id,short:id}; }
@@ -289,7 +291,7 @@ function render(){
   var html = '';
   if (S.incoming) html += incomingHtml();
   if (S.ro) html += '<div class="banner info"><b>'+(S.roSetup?'Setup from the commissioner':'Read-only standings')+'</b>'+(S.roAt?' · '+esc(S.roAt):'')+'. '+(S.roSetup?'Load it and you\'re ready to score.':'')+'<div class="btnrow"><button class="btn primary sm" data-act="ro-load">Load into my app</button><button class="btn sm" data-act="ro-dismiss">Just look</button></div></div>';
-  else if (T().example) html += '<div class="banner warn"><b>Example data.</b> Scores and handicaps are made up so you can poke at it. Commish → Data → “Start the real thing” when ready.</div>';
+  else if (T().example) html += '<div class="banner warn"><b>Example data</b> — three made-up rounds so you can see how the week looks. The commissioner wipes it before Sunday (Commish → Data → “Start the real thing”).</div>';
   else if (isFresh(T()) && !S.incoming) html += '<div class="banner info"><b>Ready for the trip.</b> Nothing scored yet. <b>Scorers:</b> get tonight\'s setup from the commissioner — <b>Hand in → Scan a QR</b>. <b>Commissioner:</b> Commish → switch on → PIN, handicaps, draw.</div>';
   if (S.ro && (tab==='handin'||tab==='commish')) html += '<div class="card"><h2>'+(tab==='handin'?'Hand in':'Commissioner')+'</h2><p class="muted" style="margin:0">You\'re looking at a snapshot someone shared, not your own copy. Tap <b>Load into my app</b> above to make it yours, or <b>Just look</b> to go back to your own copy — then this tab works as normal.</p></div>';
   else html += tab==='board'?boardHtml(C): tab==='score'?scoreHtml(C): tab==='handin'?handinHtml(C): tab==='commish'?commishHtml(C): rulesHtml();
