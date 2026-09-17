@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#1F6E43">
-<meta name="app-version" content="17e">
+<meta name="app-version" content="17f">
 <link rel="manifest" href="manifest.webmanifest">
 <title>Mission Hills Skins</title>
 <meta name="description" content="Team skins scorer for the Mission Hills 2026 trip — Stableford, snake, LD, CP, birdies, eagles, ferrets. Works offline.">
@@ -310,7 +310,7 @@ function dayCard(C,r,ri){
   if (r.frozen) h += '<div class="muted" style="font-size:12px;margin-top:6px">Summary only on this phone — the full card is on the commissioner\'s standings link.</div>';
   r.groups.forEach(function(g){
     h += '<h3>Group '+esc(g.id)+' <span class="muted" style="font-weight:400">· '+(g.complete?'18 holes':g.lastPlayed?'through hole '+g.lastPlayed:'not started')+'</span></h3>';
-    h += '<div class="teamsum">'+g.teams.map(function(t,i){ return '<div class="t'+(i?' r':'')+'">'+t.map(pname).map(esc).join(' &amp; ')+'<br><span class="s">'+frac(g.teamSkins[i])+'</span> <span class="muted" style="font-size:12px">→ '+frac(g.teamSkins[i]/(t.length||1))+' each</span></div>'+(i===0?'<div class="muted">v</div>':''); }).join('')+'</div>';
+    h += '<div class="teamsum">'+g.teams.map(function(t,i){ return '<div class="t'+(i?' r':'')+'">'+t.map(pname).map(esc).join(' &amp; ')+'<br>'+(g.lastPlayed?'<span class="s">'+frac(g.teamSkins[i])+'</span> <span class="muted" style="font-size:12px">→ '+frac(g.teamSkins[i]/(t.length||1))+' each</span>':'<span class="muted" style="font-size:12px">—</span>')+'</div>'+(i===0?'<div class="muted">v</div>':''); }).join('')+'</div>';
     if (g.events.length) h += '<details><summary>'+g.events.length+' skins events</summary><ul class="evlist">'+g.events.map(function(e){ return '<li><span>H'+e.hole+' · '+evName(e)+'</span><span>'+frac(e.value)+' → '+esc(g.teams[e.team].map(pname).join(' & '))+'</span></li>'; }).join('')+'</ul></details>';
     if (g.complete) h += '<div class="muted" style="font-size:12px;margin-top:4px">Unwon: '+CATS.map(function(k){return CATN[k]+' '+frac(g.unwon[k]);}).join(' · ')+'</div>';
   });

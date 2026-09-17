@@ -220,7 +220,7 @@
       T.players.forEach(function (p) {
         var team = 0; groupsOut.forEach(function (g) { if (g.playerShare[p.id] !== undefined) team += g.playerShare[p.id]; });
         var l = lad && lad[p.id] ? lad[p.id].skins : 0;
-        var played = groupsOut.some(function (g) { return g.playerPts[p.id] !== undefined; });
+        var played = groupsOut.some(function (g) { return g.playerPts[p.id] !== undefined && g.lastPlayed > 0; });
         perPlayer[p.id] = { team: team, ladder: l, total: team + l, pts: ptsAll[p.id], played: played, hc: hcInfo[p.id] };
         if (played) { out.totals[p.id].team += team; out.totals[p.id].ladder += l; out.totals[p.id].total += team + l; }
         out.totals[p.id].byRound.push(played ? team + l : null);
