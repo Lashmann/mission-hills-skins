@@ -6,6 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#1F6E43">
+<meta name="app-version" content="17d">
 <link rel="manifest" href="manifest.webmanifest">
 <title>Mission Hills Skins</title>
 <meta name="description" content="Team skins scorer for the Mission Hills 2026 trip — Stableford, snake, LD, CP, birdies, eagles, ferrets. Works offline.">
@@ -184,6 +185,7 @@ textarea.f{width:100%;min-height:80px;font-family:var(--mono);font-size:12px;bor
 'use strict';
 var E = window.SKINS, COURSES = window.COURSES;
 var KEY = 'mhs-state-v1';
+var APP_VERSION = (document.querySelector('meta[name="app-version"]')||{}).content || '?';
 var $ = function(id){ return document.getElementById(id); };
 var esc = function(s){ return String(s==null?'':s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); };
 var CATS = ['hole','snake','ld','cp'];
@@ -451,7 +453,8 @@ function commishHtml(C){
   h += '<div class="card"><h2>Share</h2>';
   h += '<h3 style="margin-top:4px">Setup for the scorers (tonight)</h3><p class="muted" style="font-size:13px;margin:0 0 6px">Draw, handicaps and carried pots for the next round — small enough to scan at the table. Scorers: Hand in → Scan a QR → Load.</p><div class="btnrow"><button class="btn primary" data-act="share-qr">'+(S.ui.shareQR?'Hide setup QR':'Show setup QR')+'</button><button class="btn" data-act="setup-link">Copy setup link</button></div><div class="qr" id="shareqr" '+(S.ui.shareQR?'':'hidden')+'></div>';
   h += '<h3>Standings for the group chat</h3><p class="muted" style="font-size:13px;margin:0 0 6px">Everything so far, read-only. Send it after you lock the day.</p><div class="btnrow"><button class="btn" data-act="share-link">Copy standings link</button><button class="btn" data-act="share-native">Share…</button></div></div>';
-  h += '<div class="card"><h2>Data</h2><div class="btnrow"><button class="btn" data-act="tname">Rename tournament</button><button class="btn danger" data-act="clear-scores">Clear all scores</button><button class="btn danger" data-act="reset-example">Reset to example</button>'+(T().example?'<button class="btn primary" data-act="start-real">Start the real thing</button>':'')+'</div><div class="muted" style="font-size:12px;margin-top:6px">“Start the real thing” keeps players, courses and rounds; wipes example scores and handicaps.</div></div>';
+  h += '<div class="card"><h2>Data</h2><div class="btnrow"><button class="btn" data-act="tname">Rename tournament</button><button class="btn danger" data-act="clear-scores">Clear all scores</button><button class="btn danger" data-act="reset-example">Reset to example</button>'+(T().example?'<button class="btn primary" data-act="start-real">Start the real thing</button>':'')+'</div><div class="muted" style="font-size:12px;margin-top:6px">“Start the real thing” keeps players, courses and rounds; wipes example scores and handicaps.</div>'
+     + '<div class="row" style="margin-top:12px"><span class="muted" style="font-size:12px">App version <b class="num">'+esc(APP_VERSION)+'</b> · updates itself when opened with signal</span><button class="btn sm" data-act="check-update">Check for update</button></div></div>';
   return h;
 }
 function snapshotPayload(){ var T_=JSON.parse(JSON.stringify(T())); delete T_.courses; return { v:1, kind:'snapshot', at:new Date().toISOString(), T:T_ }; }
@@ -505,7 +508,8 @@ function rulesHtml(){
   +'<li>Commish → <b>Lock round</b>.</li>'
   +'<li>Share → <b>Copy standings link</b> → group chat.</li></ol>'
   +'<p>Cards only flow scorer → commissioner. Setup only flows commissioner → scorers. If a scorer\'s phone dies, the commissioner types the card off the paper scorecard in Grid view.</p>'
-  +'<h3>Who sees what</h3><p>Every phone holds its own copy; nothing on anyone else\'s phone can change the commissioner\'s master. The table everyone sees is the <b>standings link</b> the commissioner posts each night. Anyone who has loaded the setup also sees the totals on their own Board. Commissioner mode is PIN-protected on every phone that has loaded the setup.</p></div>';
+  +'<h3>Who sees what</h3><p>Every phone holds its own copy; nothing on anyone else\'s phone can change the commissioner\'s master. The table everyone sees is the <b>standings link</b> the commissioner posts each night. Anyone who has loaded the setup also sees the totals on their own Board. Commissioner mode is PIN-protected on every phone that has loaded the setup.</p>'
+  +'<p class="muted" style="font-size:12px">App version '+esc(APP_VERSION)+'. Updates arrive on their own whenever the app is opened with signal; it reloads itself once.</p></div>';
 }
 
 /* ---------- actions ---------- */
@@ -541,6 +545,7 @@ document.addEventListener('click', function(ev){
       hashPin(pin).then(function(hh){ if(hh===T().commishHash){ S.ui.commish=true; save(); toast('Commissioner mode on'); } else toast('Wrong PIN'); render(); }); } }
   else if (a==='set-pin'){ var p1=prompt('New commissioner PIN (4+ characters)'); if(!p1||p1.trim().length<4){ toast('PIN not set'); return; } var p2=prompt('Type it again'); if(p1!==p2){ toast('PINs didn\'t match'); return; } hashPin(p1).then(function(hh){ T().commishHash=hh; save(); toast('PIN set'); render(); }); }
   else if (a==='clear-pin'){ if(confirm('Remove the commissioner PIN?')){ delete T().commishHash; save(); render(); } }
+  else if (a==='check-update'){ if(!('serviceWorker' in navigator)){ toast('Not installed as an app'); return; } navigator.serviceWorker.getRegistration().then(function(reg){ if(!reg){ toast('No update service'); return; } reg.update().then(function(){ toast('Checked — an update reloads the app by itself'); }).catch(function(){ toast('No signal'); }); }); }
   else if (a==='lock'){ r.locked=!r.locked; save(); render(); }
   else if (a==='shuffle'){ shuffleDraw(); }
   else if (a==='copy-draw'){ if(S.ui.r>0){ r.groups=JSON.parse(JSON.stringify(T().rounds[S.ui.r-1].groups)).map(function(g){ g.holes={}; delete g.handedIn; delete g.carriedOverride; return g; }); save(); render(); } }
@@ -632,7 +637,12 @@ if (tabm){ S.ui.tab=tabm[1]; if(tabm[1]==='commish') S.ui.commish=true; if(tabm[
 var m=/^#(hi|view)=([A-Za-z0-9_\-]+)$/.exec(location.hash||'');
 if (m){ unpackJSON(m[2]).then(function(o){ applyIncoming(o,m[1]); history.replaceState(null,'',location.pathname); }).catch(function(){ toast('Could not read that link'); render(); }); }
 else render();
-if ('serviceWorker' in navigator && location.protocol.indexOf('http')===0) navigator.serviceWorker.register('sw.js').catch(function(){});
+if ('serviceWorker' in navigator && location.protocol.indexOf('http')===0) {
+  var hadController = !!navigator.serviceWorker.controller, reloaded = false;
+  navigator.serviceWorker.register('sw.js').then(function(reg){ reg.update().catch(function(){}); }).catch(function(){});
+  // a new version has taken over: reload once so this page runs it (state lives in localStorage, nothing is lost)
+  navigator.serviceWorker.addEventListener('controllerchange', function(){ if (reloaded || !hadController) return; reloaded = true; location.reload(); });
+}
 })();
 </script>
 </body>
