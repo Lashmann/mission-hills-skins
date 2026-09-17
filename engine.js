@@ -171,6 +171,22 @@
 
     T.rounds.forEach(function (R, ri) {
       var course = T.courses[R.course]; if (!course) { out.rounds.push({ error: 'no course ' + R.course }); return; }
+      // A locked round shipped to a scorer's phone without its hole data carries a frozen summary instead.
+      var noHoles = R.groups.every(function (G) { return !G.holes || !Object.keys(G.holes).length; });
+      if (R.locked && R.frozen && noHoles) {
+        var F = R.frozen, z = { hole: 0, snake: 0, ld: 0, cp: 0 };
+        var fGroups = R.groups.map(function (G, gi) { var fg = (F.groups && F.groups[gi]) || {};
+          return { id: G.id, teams: G.teams, teamSkins: fg.teamSkins || G.teams.map(function () { return 0; }), playerShare: fg.playerShare || {}, playerPts: fg.playerPts || {},
+                   events: [], holes: [], complete: true, lastPlayed: course.holes.length, gaps: [], unwon: fg.unwon || z, carried: fg.carried || z, carriedShare: fg.carried || z,
+                   pots: { hole: 0, snake: 0, ld: 0, cp: 0 }, frozen: true }; });
+        var fpp = F.perPlayer || {};
+        T.players.forEach(function (p) { var x = fpp[p.id]; if (!x || !x.played) { out.totals[p.id].byRound.push(null); return; }
+          out.totals[p.id].team += x.team; out.totals[p.id].ladder += x.ladder; out.totals[p.id].total += x.total; out.totals[p.id].byRound.push(x.total); });
+        out.rounds.push({ n: R.n, date: R.date, course: R.course, tee: R.tee, slope: F.slope, rating: F.rating, ldHoles: F.ldHoles || [], cpHoles: F.cpHoles || [],
+                          groups: fGroups, ladder: F.ladder || null, perPlayer: fpp, complete: true, locked: true, unwon: F.unwon || z, hc: {}, carriedIn: carryNext, frozen: true });
+        carryNext = F.unwon || z;
+        return;
+      }
       var tee = (course.tees.filter(function (t) { return t.name === R.tee; })[0]) || {};
       var slope = R.slopeOverride || tee.slope, rating = (R.ratingOverride !== undefined && R.ratingOverride !== null) ? R.ratingOverride : tee.rating;
       var sp = specialHoles(course, R.tee, rules);

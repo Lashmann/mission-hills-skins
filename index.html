@@ -276,7 +276,7 @@ function render(){
   $('ctx').innerHTML = r ? 'R'+r.n+' · '+esc(r.course)+'<br>'+esc(fmtDate(r.date))+(r.teeTime?' · '+esc(r.teeTime):'') : '';
   var html = '';
   if (S.incoming) html += incomingHtml();
-  if (S.ro) html += '<div class="banner info"><b>Read-only snapshot</b> shared by the commissioner'+(S.roAt?' · '+esc(S.roAt):'')+'.<div class="btnrow"><button class="btn sm" data-act="ro-load">Load this into my app</button></div></div>';
+  if (S.ro) html += '<div class="banner info"><b>'+(S.roSetup?'Setup from the commissioner':'Read-only standings')+'</b>'+(S.roAt?' · '+esc(S.roAt):'')+'. '+(S.roSetup?'Load it and you\'re ready to score.':'')+'<div class="btnrow"><button class="btn primary sm" data-act="ro-load">Load into my app</button><button class="btn sm" data-act="ro-dismiss">Just look</button></div></div>';
   else if (T().example) html += '<div class="banner warn"><b>Example data.</b> Scores and handicaps are made up so you can poke at it. Commish → Data → “Start the real thing” when ready.</div>';
   html += tab==='board'?boardHtml(C): tab==='score'?scoreHtml(C): tab==='handin'?handinHtml(C): tab==='commish'?commishHtml(C): rulesHtml();
   $('main').innerHTML = html;
@@ -304,6 +304,7 @@ function dayCard(C,r,ri){
   var h = '<div class="card daycard"><div class="dh"><div><h2>Round '+r.n+' · '+esc(r.course)+'</h2><div class="muted" style="font-size:13px">'+esc(fmtDate(r.date))+(R_.teeTime?' · tee '+esc(R_.teeTime):'')+' · '+esc(r.tee)+' tees'+(r.slope?' · slope '+r.slope:'')+'</div></div>'+status+'</div>';
   var drawn = r.groups.some(function(g){ return g.teams.some(function(t){return t.length;}); });
   if (!drawn) return h+'<div class="muted" style="margin-top:8px">Draw not set yet.</div></div>';
+  if (r.frozen) h += '<div class="muted" style="font-size:12px;margin-top:6px">Summary only on this phone — the full card is on the commissioner\'s standings link.</div>';
   r.groups.forEach(function(g){
     h += '<h3>Group '+esc(g.id)+' <span class="muted" style="font-weight:400">· '+(g.complete?'18 holes':g.lastPlayed?'through hole '+g.lastPlayed:'not started')+'</span></h3>';
     h += '<div class="teamsum">'+g.teams.map(function(t,i){ return '<div class="t'+(i?' r':'')+'">'+t.map(pname).map(esc).join(' &amp; ')+'<br><span class="s">'+frac(g.teamSkins[i])+'</span> <span class="muted" style="font-size:12px">→ '+frac(g.teamSkins[i]/(t.length||1))+' each</span></div>'+(i===0?'<div class="muted">v</div>':''); }).join('')+'</div>';
@@ -325,8 +326,9 @@ function scoreHtml(C){
   h += '<div class="chips" style="margin-top:8px">'+r.groups.map(function(x,i){ return '<button class="chip" aria-pressed="'+(i===S.ui.g)+'" data-act="group" data-i="'+i+'">Group '+esc(x.id)+'</button>'; }).join('')+'<span style="flex:1"></span><button class="chip" aria-pressed="'+(S.ui.mode==='grid')+'" data-act="mode">'+(S.ui.mode==='grid'?'Grid view':'Hole by hole')+'</button></div></div>';
   var drawn = g.teams.every(function(t){return t.length>0;});
   if (!drawn) return h+'<div class="card"><h2>Draw not set</h2><p class="muted">The commissioner sets the teams for this round (Commish → Draw).</p></div>';
-  if (r.locked && !isCommish()) h += '<div class="banner good">Round '+r.n+' is <b>locked</b> by the commissioner — read only.</div>';
   var cr = C.rounds[S.ui.r], cg = cr.groups[S.ui.g], course=courseOf(r), all=[].concat.apply([],g.teams);
+  if (cr.frozen) return h+'<div class="banner good">Round '+r.n+' is <b>final</b>. This phone holds the summary only — team skins '+cg.teamSkins.map(frac).join(' v ')+'. The full card is on the commissioner\'s standings link.</div>';
+  if (r.locked && !isCommish()) h += '<div class="banner good">Round '+r.n+' is <b>locked</b> by the commissioner — read only.</div>';
   h += '<div class="card">';
   h += '<div class="teamsum">'+g.teams.map(function(t,i){ return '<div class="t'+(i?' r':'')+'">'+t.map(pname).map(esc).join(' &amp; ')+'<br><span class="s">'+frac(cg.teamSkins[i])+'</span></div>'+(i===0?'<div class="muted">v</div>':''); }).join('')+'</div>';
   h += '<div class="muted" style="font-size:12px;text-align:center;margin-top:4px">'+(cg.complete?'18 holes in':cg.lastPlayed?'through hole '+cg.lastPlayed:'not started')+(cg.gaps.length?' · <span style="color:var(--amber)">holes '+cg.gaps.join(', ')+' entered out of order — fill the gap</span>':'')+'</div>';
@@ -386,7 +388,7 @@ function sel(key,hole,cur,all){ return '<select data-act="gsel" data-k="'+key+'"
 
 /* ----- Hand in ----- */
 function receiveHtml(){
-  return '<div class="card"><h2>Receive a card</h2><p class="muted" style="font-size:14px;margin:0 0 4px">Scan the other phone\'s QR from inside this app, or paste the link they sent you (AirDrop, iMessage, WhatsApp).</p><div class="btnrow"><button class="btn primary" data-act="scan-open">Scan a QR</button><button class="btn" data-act="paste-open">Paste a link</button></div><div id="paste-box" hidden><textarea class="f" id="paste-txt" placeholder="Paste the hand-in link here"></textarea><div class="btnrow"><button class="btn primary" data-act="paste-go">Read it</button></div></div></div>';
+  return '<div class="card"><h2>Receive</h2><p class="muted" style="font-size:14px;margin:0 0 4px"><b>Scorers:</b> get tonight\'s setup (draw, handicaps, carried pots) from the commissioner. <b>Commissioner:</b> take in a scorer\'s card. Scan their QR from inside this app, or paste a link they sent you (AirDrop, iMessage, WhatsApp).</p><div class="btnrow"><button class="btn primary" data-act="scan-open">Scan a QR</button><button class="btn" data-act="paste-open">Paste a link</button></div><div id="paste-box" hidden><textarea class="f" id="paste-txt" placeholder="Paste the link here"></textarea><div class="btnrow"><button class="btn primary" data-act="paste-go">Read it</button></div></div></div>';
 }
 function handinHtml(C){
   var r=R(), g=G(), rs=T().rounds;
@@ -414,7 +416,9 @@ function mergeIncoming(){ var i=S.incoming, T_=T(); var r=T_.rounds.filter(funct
 
 /* ----- Commish ----- */
 function commishHtml(C){
-  var h='<div class="card"><label class="switch"><input type="checkbox" data-act="commish-toggle" '+(S.ui.commish?'checked':'')+'> Commissioner mode</label><div class="muted" style="font-size:13px;margin-top:6px">Turns on editing of players, draw, handicaps and locked rounds on this phone. Your phone is the master copy.</div></div>';
+  var h='<div class="card"><label class="switch"><input type="checkbox" data-act="commish-toggle" '+(S.ui.commish?'checked':'')+'> Commissioner mode</label><div class="muted" style="font-size:13px;margin-top:6px">Turns on editing of players, draw, handicaps and locked rounds on this phone. Your phone is the master copy.'+(T().commishHash?' <b>PIN protected.</b>':'')+'</div>';
+  if (S.ui.commish) h += '<div class="btnrow"><button class="btn sm" data-act="set-pin">'+(T().commishHash?'Change PIN':'Set commissioner PIN')+'</button>'+(T().commishHash?'<button class="btn sm" data-act="clear-pin">Remove PIN</button>':'')+'</div><div class="muted" style="font-size:12px;margin-top:6px">'+(T().commishHash?'Every phone that loads your setup will need this PIN to enter commissioner mode. Scorers don\'t need it.':'No PIN yet — anyone who loads your setup could switch commissioner mode on. Set one before the trip.')+'</div>';
+  h += '</div>';
   if (!S.ui.commish) return h;
   h += receiveHtml();
   var r=R(), cr=C.rounds[S.ui.r], rs=T().rounds, course=courseOf(r), tee=teeOf(r);
@@ -444,13 +448,28 @@ function commishHtml(C){
   // players
   h += '<div class="card"><h2>Players</h2><div class="tbl"><table><thead><tr><th style="text-align:left">Name</th><th>Short</th><th></th></tr></thead><tbody>'+T().players.map(function(p){ return '<tr><td><input class="f sm" value="'+esc(p.name)+'" data-act="pname" data-p="'+p.id+'"></td><td><input class="f sm" style="width:80px" value="'+esc(p.short||'')+'" data-act="pshort" data-p="'+p.id+'"></td><td><button class="btn sm danger" data-act="pdel" data-p="'+p.id+'">✕</button></td></tr>'; }).join('')+'</tbody></table></div><div class="btnrow"><button class="btn" data-act="padd">Add player</button></div></div>';
   // share + data
-  h += '<div class="card"><h2>Share standings</h2><p class="muted" style="font-size:14px;margin:0 0 8px">A read-only snapshot of everything, for the group chat. Also what scorers open the night before to get the draw and handicaps.</p><div class="btnrow"><button class="btn primary" data-act="share-link">Copy standings link</button><button class="btn" data-act="share-native">Share…</button><button class="btn" data-act="share-qr">'+(S.ui.shareQR?'Hide QR':'Show QR')+'</button></div><div class="qr" id="shareqr" '+(S.ui.shareQR?'':'hidden')+'></div></div>';
+  h += '<div class="card"><h2>Share</h2>';
+  h += '<h3 style="margin-top:4px">Setup for the scorers (tonight)</h3><p class="muted" style="font-size:13px;margin:0 0 6px">Draw, handicaps and carried pots for the next round — small enough to scan at the table. Scorers: Hand in → Scan a QR → Load.</p><div class="btnrow"><button class="btn primary" data-act="share-qr">'+(S.ui.shareQR?'Hide setup QR':'Show setup QR')+'</button><button class="btn" data-act="setup-link">Copy setup link</button></div><div class="qr" id="shareqr" '+(S.ui.shareQR?'':'hidden')+'></div>';
+  h += '<h3>Standings for the group chat</h3><p class="muted" style="font-size:13px;margin:0 0 6px">Everything so far, read-only. Send it after you lock the day.</p><div class="btnrow"><button class="btn" data-act="share-link">Copy standings link</button><button class="btn" data-act="share-native">Share…</button></div></div>';
   h += '<div class="card"><h2>Data</h2><div class="btnrow"><button class="btn" data-act="tname">Rename tournament</button><button class="btn danger" data-act="clear-scores">Clear all scores</button><button class="btn danger" data-act="reset-example">Reset to example</button>'+(T().example?'<button class="btn primary" data-act="start-real">Start the real thing</button>':'')+'</div><div class="muted" style="font-size:12px;margin-top:6px">“Start the real thing” keeps players, courses and rounds; wipes example scores and handicaps.</div></div>';
   return h;
 }
 function snapshotPayload(){ var T_=JSON.parse(JSON.stringify(T())); delete T_.courses; return { v:1, kind:'snapshot', at:new Date().toISOString(), T:T_ }; }
+// Setup for scorers: same shape, but locked rounds lose their hole data and every group carries its computed pots as an override,
+// so the scorer's phone shows the right hole/snake/LD/CP values without needing the whole history. Stays small enough for a QR.
+function setupPayload(){ var C=calc(), T_=JSON.parse(JSON.stringify(T())); delete T_.courses; delete T_.example;
+  T_.rounds.forEach(function(r,ri){ var cr=C.rounds[ri]; if(!(r.locked&&cr&&cr.complete)) return;
+    var rp={}; Object.keys(cr.perPlayer).forEach(function(p){ var x=cr.perPlayer[p]; rp[p]={team:x.team,ladder:x.ladder,total:x.total,pts:x.pts,played:x.played}; });
+    r.frozen={ perPlayer:rp, ladder:cr.ladder, unwon:cr.unwon, ldHoles:cr.ldHoles, cpHoles:cr.cpHoles, slope:cr.slope, rating:cr.rating,
+               groups:cr.groups.map(function(g){ return {teamSkins:g.teamSkins, playerShare:g.playerShare, playerPts:g.playerPts, unwon:g.unwon, carried:g.carried}; }) };
+    r.groups.forEach(function(g){ g.holes={}; delete g.handedIn; }); });
+  return { v:1, kind:'snapshot', setup:true, at:new Date().toISOString(), T:T_ }; }
+/* commissioner PIN: set once on the master; travels inside the setup, so every phone that loads it needs the PIN for commissioner mode */
+function hashPin(pin){ pin=String(pin||'').trim();
+  if (window.crypto&&crypto.subtle&&window.isSecureContext) return crypto.subtle.digest('SHA-256', new TextEncoder().encode('mhs:'+pin)).then(function(b){ return 's'+Array.prototype.map.call(new Uint8Array(b),function(x){ return ('0'+x.toString(16)).slice(-2); }).join(''); });
+  var h=5381; for(var i=0;i<pin.length;i++) h=((h<<5)+h+pin.charCodeAt(i))>>>0; return Promise.resolve('x'+h.toString(16)); }
 var _shareLink='';
-function drawShareQR(){ var box=$('shareqr'); if(!box) return; box.innerHTML=''; packJSON(snapshotPayload()).then(function(s){ _shareLink=location.origin+location.pathname+'#view='+s; try { new QRCode(box,{text:_shareLink,width:236,height:236,correctLevel:QRCode.CorrectLevel.L}); } catch(e){ box.innerHTML='<div class="muted">Too much data for a QR — use the link.</div>'; } }); }
+function drawShareQR(){ var box=$('shareqr'); if(!box) return; box.innerHTML=''; packJSON(setupPayload()).then(function(s){ var link=location.origin+location.pathname+'#view='+s; try { new QRCode(box,{text:link,width:236,height:236,correctLevel:QRCode.CorrectLevel.L}); box.insertAdjacentHTML('beforeend','<div class="muted" style="font-size:11px;width:100%;text-align:center;color:#555">'+link.length+' characters</div>'); } catch(e){ box.innerHTML='<div class="muted">Too much data for a QR — use the setup link.</div>'; } }); }
 
 /* ----- Rules ----- */
 function rulesHtml(){
@@ -471,7 +490,22 @@ function rulesHtml(){
   +'<li>Everything unwon — hole skins, snake, LDs, CPs — is pooled across both groups and <b>split evenly between the next day\'s groups</b>. Halves are fine. Each share sits on the first hole of its kind the next day and rolls until it\'s won.</li></ul>'
   +'<h3>Handicaps</h3><p>The commissioner sets each player\'s index for the day (and may adjust aggressively). Playing handicap = index × slope ÷ 113 + (rating − par), rounded — the GA daily handicap. Strokes fall by stroke index. Stableford: net double bogey 0, bogey 1, par 2, birdie 3, eagle 4.</p>'
   +'<h3>Money</h3><p>Entry $150. 1st $1,050 · 2nd $150. Skins left unwon after round 5: to be decided.</p>'
-  +'<h3>Scoring</h3><p>One scorer per group each day, on their own phone, live or at the end of the round. Hand in by QR. The commissioner\'s copy is the master and can correct anything before locking the day.</p></div>';
+  +'<h3>Scoring</h3><p>One scorer per group each day, on their own phone, live or at the end of the round. Hand in by QR. The commissioner\'s copy is the master and can correct anything before locking the day.</p></div>'
+  +'<div class="card rules"><h2>How the week runs</h2>'
+  +'<p><b>Two roles.</b> The commissioner\'s phone is the master. Each day two scorers — one per group — score on their own phones. Nothing to set up on a scorer\'s phone: just score your group.</p>'
+  +'<h3>Every evening at dinner — commissioner</h3><ol>'
+  +'<li>Commish → Round: check tomorrow\'s course and tees.</li>'
+  +'<li>Handicaps: copy from the previous round, adjust anyone being nuked.</li>'
+  +'<li>Draw: shuffle or set by hand. Read out the teams.</li>'
+  +'<li>Share → <b>Show setup QR</b>. Scorers: Hand in → <b>Scan a QR</b> → <b>Load</b>. Their phones now have tomorrow\'s draw, handicaps and carried pots.</li></ol>'
+  +'<h3>On the course — scorers</h3><p>Score → your group → hole by hole. No signal needed. Points, hole value and snake value are live. Tap a name for snake / LD / CP / ferret as they happen.</p>'
+  +'<h3>At the bar — commissioner</h3><ol>'
+  +'<li>Each scorer: Hand in → QR. Commissioner: Hand in → <b>Scan a QR</b> → <b>Merge</b>. Twice.</li>'
+  +'<li>Score: glance over both cards, fix anything. Board shows the day\'s skins and ladder.</li>'
+  +'<li>Commish → <b>Lock round</b>.</li>'
+  +'<li>Share → <b>Copy standings link</b> → group chat.</li></ol>'
+  +'<p>Cards only flow scorer → commissioner. Setup only flows commissioner → scorers. If a scorer\'s phone dies, the commissioner types the card off the paper scorecard in Grid view.</p>'
+  +'<h3>Who sees what</h3><p>Every phone holds its own copy; nothing on anyone else\'s phone can change the commissioner\'s master. The table everyone sees is the <b>standings link</b> the commissioner posts each night. Anyone who has loaded the setup also sees the totals on their own Board. Commissioner mode is PIN-protected on every phone that has loaded the setup.</p></div>';
 }
 
 /* ---------- actions ---------- */
@@ -497,8 +531,16 @@ document.addEventListener('click', function(ev){
   else if (a==='scan-close'){ if(_scan) _scan.close(); }
   else if (a==='merge'){ mergeIncoming(); }
   else if (a==='discard'){ S.incoming=null; render(); }
-  else if (a==='ro-load'){ if (confirm('Replace the data on this phone with the commissioner\'s snapshot?'+localExtraWarning())) { S.ro=false; save(); toast('Loaded'); history.replaceState(null,'',location.pathname); render(); } }
-  else if (a==='commish-toggle'){ S.ui.commish=el.checked; save(); render(); }
+  else if (a==='ro-dismiss'){ S.ro=false; load(); S.ui.r=pickRound(); S.ui.hole=firstOpenHole(); render(); }
+  else if (a==='ro-load'){ var wasCommish=false; try { var prev=JSON.parse(localStorage.getItem(KEY)||'{}'); wasCommish=!!(prev.ui&&prev.ui.commish); } catch(e){}
+    if (confirm((wasCommish?'You are the COMMISSIONER on this phone — loading replaces your master copy. ':'')+'Replace the data on this phone with this snapshot?'+localExtraWarning())) { S.ro=false; S.ui.commish=wasCommish; S.ui.r=pickRound(); S.ui.hole=firstOpenHole(); save(); toast('Loaded'); history.replaceState(null,'',location.pathname); render(); } }
+  else if (a==='commish-toggle'){
+    if (!el.checked){ S.ui.commish=false; save(); render(); }
+    else if (!T().commishHash){ S.ui.commish=true; save(); render(); }
+    else { var pin=prompt('Commissioner PIN'); if(pin===null){ render(); return; }
+      hashPin(pin).then(function(hh){ if(hh===T().commishHash){ S.ui.commish=true; save(); toast('Commissioner mode on'); } else toast('Wrong PIN'); render(); }); } }
+  else if (a==='set-pin'){ var p1=prompt('New commissioner PIN (4+ characters)'); if(!p1||p1.trim().length<4){ toast('PIN not set'); return; } var p2=prompt('Type it again'); if(p1!==p2){ toast('PINs didn\'t match'); return; } hashPin(p1).then(function(hh){ T().commishHash=hh; save(); toast('PIN set'); render(); }); }
+  else if (a==='clear-pin'){ if(confirm('Remove the commissioner PIN?')){ delete T().commishHash; save(); render(); } }
   else if (a==='lock'){ r.locked=!r.locked; save(); render(); }
   else if (a==='shuffle'){ shuffleDraw(); }
   else if (a==='copy-draw'){ if(S.ui.r>0){ r.groups=JSON.parse(JSON.stringify(T().rounds[S.ui.r-1].groups)).map(function(g){ g.holes={}; delete g.handedIn; delete g.carriedOverride; return g; }); save(); render(); } }
@@ -508,10 +550,11 @@ document.addEventListener('click', function(ev){
   else if (a==='share-link'){ packJSON(snapshotPayload()).then(function(s){ _shareLink=location.origin+location.pathname+'#view='+s; copy(_shareLink,'Standings link copied ('+_shareLink.length+' chars)'); }); }
   else if (a==='share-native'){ packJSON(snapshotPayload()).then(function(s){ _shareLink=location.origin+location.pathname+'#view='+s; shareText(T().name+' — standings', _shareLink); }); }
   else if (a==='share-qr'){ S.ui.shareQR=!S.ui.shareQR; save(); render(); }
+  else if (a==='setup-link'){ packJSON(setupPayload()).then(function(s){ copy(location.origin+location.pathname+'#view='+s,'Setup link copied'); }); }
   else if (a==='tname'){ var n=prompt('Tournament name', T().name); if(n){ T().name=n; save(); render(); } }
   else if (a==='clear-scores'){ if(confirm('Clear every score in every round? Players, draw and handicaps stay.')){ T().rounds.forEach(function(x){ x.locked=false; x.groups.forEach(function(g){ g.holes={}; }); }); save(); render(); } }
   else if (a==='reset-example'){ if(confirm('Replace everything with the example data?')){ S.T=exampleTournament(); S.ui.r=0; save(); render(); } }
-  else if (a==='start-real'){ if(confirm('Wipe the example scores and handicaps and start the real tournament?')){ S.T=emptyTournament(); S.T.rounds.forEach(function(x){ x.index={}; x.groups.forEach(function(g){ g.teams=[[],[]]; }); }); S.ui.r=0; S.ui.commish=true; save(); toast('Ready — set the draw and handicaps'); render(); } }
+  else if (a==='start-real'){ if(confirm('Wipe the example scores and handicaps and start the real tournament?')){ var keepPin=T().commishHash, keepName=T().name; S.T=emptyTournament(); if(keepPin) S.T.commishHash=keepPin; if(keepName&&keepName!=='Mission Hills 2026') S.T.name=keepName; S.T.rounds.forEach(function(x){ x.index={}; x.groups.forEach(function(g){ g.teams=[[],[]]; }); }); S.ui.r=0; S.ui.commish=true; save(); toast('Ready — set the draw and handicaps'); render(); } }
 });
 document.addEventListener('change', function(ev){
   var el=ev.target.closest('[data-act]'); if(!el) return; var a=el.dataset.act, r=R();
@@ -576,7 +619,7 @@ function unpackJSON(str){ var t=str[0], data=ub64u(str.slice(1));
   return new Response(ds.readable).arrayBuffer().then(function(buf){ return JSON.parse(new TextDecoder().decode(new Uint8Array(buf))); }); }
 function applyIncoming(o, kind){
   if (o.kind==='handin'){ S.incoming=o; S.ui.tab='handin'; render(); }
-  else if (o.kind==='snapshot'){ S.ro=true; S.roAt=new Date(o.at).toLocaleString(); S.T=o.T; S.T.courses=COURSES; S.ui.tab='board'; S.ui.r=pickRound(); render(); }
+  else if (o.kind==='snapshot'){ S.ro=true; S.roSetup=!!o.setup; S.roAt=new Date(o.at).toLocaleString(); S.T=o.T; S.T.courses=COURSES; S.ui.tab=o.setup?'score':'board'; S.ui.r=pickRound(); S.ui.hole=1; render(); }
 }
 
 /* ---------- boot ---------- */
@@ -584,8 +627,8 @@ load();
 S.ui.r = Math.min(S.ui.r, T().rounds.length-1); if (S.ui.r<0) S.ui.r=0;
 if (!localStorage.getItem(KEY)) S.ui.r = pickRound();
 S.ui.hole = firstOpenHole();
-var tabm=/^#tab=(board|score|handin|commish|rules)(?::(grid|live))?$/.exec(location.hash||'');
-if (tabm){ S.ui.tab=tabm[1]; if(tabm[1]==='commish') S.ui.commish=true; if(tabm[2]) S.ui.mode=tabm[2]; history.replaceState(null,'',location.pathname); }
+var tabm=/^#tab=(board|score|handin|commish|rules)(?::(grid|live|qr))?$/.exec(location.hash||'');
+if (tabm){ S.ui.tab=tabm[1]; if(tabm[1]==='commish') S.ui.commish=true; if(tabm[2]==='qr') S.ui.shareQR=true; else if(tabm[2]) S.ui.mode=tabm[2]; history.replaceState(null,'',location.pathname); }
 var m=/^#(hi|view)=([A-Za-z0-9_\-]+)$/.exec(location.hash||'');
 if (m){ unpackJSON(m[2]).then(function(o){ applyIncoming(o,m[1]); history.replaceState(null,'',location.pathname); }).catch(function(){ toast('Could not read that link'); render(); }); }
 else render();

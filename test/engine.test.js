@@ -113,5 +113,21 @@ eq(R.standings.length, 8, '8 in standings');
   eq([R2.rounds[2].carriedIn, R2.carryNext], [null, null], 'nothing flows past an unfinished round');
 }
 
+// ---- frozen round: a locked round with no hole data but a saved summary must behave exactly like the full one ----
+{
+  const full = E.computeTournament(T);                     // T from the worked example: R1 complete, R2 partial
+  const r1 = full.rounds[0];
+  const frozen = { perPlayer:r1.perPlayer, ladder:r1.ladder, unwon:r1.unwon, ldHoles:r1.ldHoles, cpHoles:r1.cpHoles, slope:r1.slope, rating:r1.rating,
+                   groups:r1.groups.map(g=>({teamSkins:g.teamSkins, playerShare:g.playerShare, playerPts:g.playerPts, unwon:g.unwon, carried:g.carried})) };
+  const T3 = JSON.parse(JSON.stringify(T)); T3.courses = COURSES;
+  T3.rounds[0].locked = true; T3.rounds[0].frozen = frozen; T3.rounds[0].groups.forEach(g=>{ g.holes = {}; });
+  const F = E.computeTournament(T3);
+  eq(F.rounds[0].frozen, true, 'round 1 recognised as frozen');
+  eq(F.rounds[0].groups.map(g=>g.teamSkins), r1.groups.map(g=>g.teamSkins), 'frozen team skins identical');
+  eq(F.totals, full.totals, 'trophy totals identical with a frozen round 1');
+  eq(F.rounds[1].groups[0].carried, full.rounds[1].groups[0].carried, 'round 2 carried pots identical from the frozen summary');
+  eq(F.rounds[1].groups[0].holes[0].holeValue, 2, 'round 2 hole 1 still worth 2 on a scorer phone');
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail?1:0);
