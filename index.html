@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#1F6E43">
-<meta name="app-version" content="17g">
+<meta name="app-version" content="17h">
 <link rel="manifest" href="manifest.webmanifest">
 <title>Mission Hills Skins</title>
 <meta name="description" content="Team skins scorer for the Mission Hills 2026 trip — Stableford, snake, LD, CP, birdies, eagles, ferrets. Works offline.">
@@ -251,11 +251,13 @@ function exampleTournament(){
   scoreGroup(rounds[1], rounds[1].groups[0], 6);
   return T;
 }
-function emptyTournament(){ var T = exampleTournament(); T.example=false; T.rounds.forEach(function(r){ r.locked=false; r.groups.forEach(function(g){ g.holes={}; }); }); return T; }
+// A clean tournament: real players, courses, dates and tee times — no scores, no handicaps, no draw. What a fresh install starts with.
+function emptyTournament(){ var T = exampleTournament(); T.example=false; T.rounds.forEach(function(r){ r.locked=false; r.index={}; r.hcOverride={}; r.groups.forEach(function(g){ g.holes={}; g.teams=[[],[]]; delete g.carriedOverride; delete g.handedIn; }); }); return T; }
+function isFresh(T_){ return !T_.example && T_.rounds.every(function(r){ return r.groups.every(function(g){ return !g.teams.some(function(t){ return t.length; }) && !Object.keys(g.holes||{}).length; }); }); }
 
 /* ---------- state ---------- */
 var S = { T:null, ui:{ tab:'board', r:0, g:0, hole:1, mode:'live', commish:false, open:{} }, ro:false, incoming:null };
-function load(){ try { var raw=localStorage.getItem(KEY); if(raw){ var o=JSON.parse(raw); if(o&&o.T&&o.T.rounds){ S.T=o.T; S.ui=Object.assign(S.ui,o.ui||{}); S.T.courses = S.T.courses||COURSES; return; } } } catch(e){} S.T = exampleTournament(); }
+function load(){ try { var raw=localStorage.getItem(KEY); if(raw){ var o=JSON.parse(raw); if(o&&o.T&&o.T.rounds){ S.T=o.T; S.ui=Object.assign(S.ui,o.ui||{}); S.T.courses = S.T.courses||COURSES; return; } } } catch(e){} S.T = emptyTournament(); }
 function save(){ if (S.ro) return; try { localStorage.setItem(KEY, JSON.stringify({T:S.T, ui:S.ui})); } catch(e){ toast('Could not save — storage blocked'); } }
 function T(){ return S.T; } function R(){ return T().rounds[S.ui.r]; } function G(){ var r=R(); return r&&r.groups[S.ui.g]; }
 function pl(id){ return T().players.filter(function(p){return p.id===id;})[0] || {id:id,name:id,short:id}; }
@@ -288,6 +290,7 @@ function render(){
   if (S.incoming) html += incomingHtml();
   if (S.ro) html += '<div class="banner info"><b>'+(S.roSetup?'Setup from the commissioner':'Read-only standings')+'</b>'+(S.roAt?' · '+esc(S.roAt):'')+'. '+(S.roSetup?'Load it and you\'re ready to score.':'')+'<div class="btnrow"><button class="btn primary sm" data-act="ro-load">Load into my app</button><button class="btn sm" data-act="ro-dismiss">Just look</button></div></div>';
   else if (T().example) html += '<div class="banner warn"><b>Example data.</b> Scores and handicaps are made up so you can poke at it. Commish → Data → “Start the real thing” when ready.</div>';
+  else if (isFresh(T()) && !S.incoming) html += '<div class="banner info"><b>Ready for the trip.</b> Nothing scored yet. <b>Scorers:</b> get tonight\'s setup from the commissioner — <b>Hand in → Scan a QR</b>. <b>Commissioner:</b> Commish → switch on → PIN, handicaps, draw.</div>';
   if (S.ro && (tab==='handin'||tab==='commish')) html += '<div class="card"><h2>'+(tab==='handin'?'Hand in':'Commissioner')+'</h2><p class="muted" style="margin:0">You\'re looking at a snapshot someone shared, not your own copy. Tap <b>Load into my app</b> above to make it yours, or <b>Just look</b> to go back to your own copy — then this tab works as normal.</p></div>';
   else html += tab==='board'?boardHtml(C): tab==='score'?scoreHtml(C): tab==='handin'?handinHtml(C): tab==='commish'?commishHtml(C): rulesHtml();
   $('main').innerHTML = html;
@@ -464,7 +467,7 @@ function commishHtml(C){
   h += '<div class="card"><h2>Share</h2>';
   h += '<h3 style="margin-top:4px">Setup for the scorers (tonight)</h3><p class="muted" style="font-size:13px;margin:0 0 6px">Draw, handicaps and carried pots for the next round — small enough to scan at the table. Scorers: Hand in → Scan a QR → Load.</p><div class="btnrow"><button class="btn primary" data-act="share-qr">'+(S.ui.shareQR?'Hide setup QR':'Show setup QR')+'</button><button class="btn" data-act="setup-link">Copy setup link</button></div><div class="qr" id="shareqr" '+(S.ui.shareQR?'':'hidden')+'></div>';
   h += '<h3>Standings for the group chat</h3><p class="muted" style="font-size:13px;margin:0 0 6px">Everything so far, read-only. Send it after you lock the day.</p><div class="btnrow"><button class="btn" data-act="share-link">Copy standings link</button><button class="btn" data-act="share-native">Share…</button></div></div>';
-  h += '<div class="card"><h2>Data</h2><div class="btnrow"><button class="btn" data-act="tname">Rename tournament</button><button class="btn danger" data-act="clear-scores">Clear all scores</button><button class="btn danger" data-act="reset-example">Reset to example</button>'+(T().example?'<button class="btn primary" data-act="start-real">Start the real thing</button>':'')+'</div><div class="muted" style="font-size:12px;margin-top:6px">“Start the real thing” keeps players, courses and rounds; wipes example scores and handicaps.</div>'
+  h += '<div class="card"><h2>Data</h2><div class="btnrow"><button class="btn" data-act="tname">Rename tournament</button><button class="btn danger" data-act="clear-scores">Clear all scores</button><button class="btn danger" data-act="fresh">Wipe to clean</button><button class="btn" data-act="reset-example">Load example data</button>'+(T().example?'<button class="btn primary" data-act="start-real">Start the real thing</button>':'')+'</div><div class="muted" style="font-size:12px;margin-top:6px">“Wipe to clean” is what a fresh install looks like: players, courses and rounds only. Your PIN survives all of these.</div>'
      + '<div class="row" style="margin-top:12px"><span class="muted" style="font-size:12px">App version <b class="num">'+esc(APP_VERSION)+'</b> · updates itself when opened with signal</span><button class="btn sm" data-act="check-update">Check for update</button></div></div>';
   return h;
 }
@@ -572,8 +575,9 @@ document.addEventListener('click', function(ev){
   else if (a==='setup-link'){ packJSON(setupPayload()).then(function(s){ copy(location.origin+location.pathname+'#view='+s,'Setup link copied'); }); }
   else if (a==='tname'){ var n=prompt('Tournament name', T().name); if(n){ T().name=n; save(); render(); } }
   else if (a==='clear-scores'){ if(confirm('Clear every score in every round? Players, draw and handicaps stay.')){ T().rounds.forEach(function(x){ x.locked=false; x.groups.forEach(function(g){ g.holes={}; }); }); save(); render(); } }
-  else if (a==='reset-example'){ if(confirm('Replace everything with the example data?')){ S.T=exampleTournament(); S.ui.r=0; save(); render(); } }
-  else if (a==='start-real'){ if(confirm('Wipe the example scores and handicaps and start the real tournament?')){ var keepPin=T().commishHash, keepName=T().name; S.T=emptyTournament(); if(keepPin) S.T.commishHash=keepPin; if(keepName&&keepName!=='Mission Hills 2026') S.T.name=keepName; S.T.rounds.forEach(function(x){ x.index={}; x.groups.forEach(function(g){ g.teams=[[],[]]; }); }); S.ui.r=0; S.ui.commish=true; save(); toast('Ready — set the draw and handicaps'); render(); } }
+  else if (a==='reset-example'){ if(confirm('Replace everything with the example data?')){ var pin2=T().commishHash; S.T=exampleTournament(); if(pin2) S.T.commishHash=pin2; S.ui.r=0; save(); render(); } }
+  else if (a==='fresh'){ if(confirm('Wipe everything on this phone and start clean (players, courses and rounds stay)?')){ var pin3=T().commishHash; S.T=emptyTournament(); if(pin3) S.T.commishHash=pin3; S.ui.r=0; save(); toast('Clean'); render(); } }
+  else if (a==='start-real'){ if(confirm('Wipe the example scores and handicaps and start the real tournament?')){ var keepPin=T().commishHash, keepName=T().name; S.T=emptyTournament(); if(keepPin) S.T.commishHash=keepPin; if(keepName&&keepName!=='Mission Hills 2026') S.T.name=keepName; S.ui.r=0; S.ui.commish=true; save(); toast('Ready — set the draw and handicaps'); render(); } }
 });
 document.addEventListener('change', function(ev){
   var el=ev.target.closest('[data-act]'); if(!el) return; var a=el.dataset.act, r=R();
