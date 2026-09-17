@@ -129,5 +129,15 @@ eq(R.standings.length, 8, '8 in standings');
   eq(F.rounds[1].groups[0].holes[0].holeValue, 2, 'round 2 hole 1 still worth 2 on a scorer phone');
 }
 
+// ---- personal contribution: what each player won for the pair must add up to the pair's skins ----
+{
+  const R3 = E.computeTournament(T);
+  R3.rounds[0].groups.forEach(g => g.teams.forEach((t,i) => {
+    const sum = t.reduce((a,p)=>a+(g.playerContrib[p]||0),0);
+    eq(Math.round(sum*100)/100, Math.round(g.teamSkins[i]*100)/100, 'contrib sums to team skins: '+g.id+' team '+(i+1));
+  }));
+  const pp = R3.rounds[0].perPlayer; eq(typeof pp.a.contrib, 'number', 'perPlayer carries contrib');
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail?1:0);

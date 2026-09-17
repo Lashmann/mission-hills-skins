@@ -74,7 +74,8 @@
       pots: { hole: +(carried.hole || 0), snake: +(carried.snake || 0), ld: +(carried.ld || 0), cp: +(carried.cp || 0) }
     };
     all.forEach(function (p) { res.playerPts[p] = 0; res.playerGross[p] = 0; });
-    res.playerShare = {};
+    res.playerShare = {}; res.playerContrib = {};                 // contrib: skins this player personally won for the team
+    all.forEach(function (p) { res.playerContrib[p] = 0; });
     if (!all.length) return res;                                  // no draw yet: nothing played, nothing complete
     var pot = res.pots, stopped = false;
 
@@ -103,7 +104,9 @@
       var top = Math.max.apply(null, best), winners = [];
       best.forEach(function (b, i) { if (b === top) winners.push(i); });
       if (winners.length === 1) { rec.holeWinner = winners[0]; res.teamSkins[winners[0]] += pot.hole;
-        res.events.push({ hole: h, type: 'hole', team: winners[0], value: pot.hole }); pot.hole = 0; }
+        var scorers = teams[winners[0]].filter(function (p) { return rec.pts[p] === top; });   // the player(s) whose score won it
+        scorers.forEach(function (p) { res.playerContrib[p] += pot.hole / scorers.length; });
+        res.events.push({ hole: h, type: 'hole', team: winners[0], value: pot.hole, player: scorers.length === 1 ? scorers[0] : null }); pot.hole = 0; }
       rec.holeBest = best;
 
       // snake value on this hole
@@ -112,27 +115,27 @@
       // birdies / eagles (gross, regardless of handicap) and ferrets — to the team
       all.forEach(function (p) {
         var g = gross[p]; if (typeof g !== 'number') return;
-        if (g <= H.par - 2) { res.teamSkins[teamOf[p]] += rec.snakeValue;
+        if (g <= H.par - 2) { res.teamSkins[teamOf[p]] += rec.snakeValue; res.playerContrib[p] += rec.snakeValue;
           res.events.push({ hole: h, type: g === 1 ? 'ace' : 'eagle', player: p, team: teamOf[p], value: rec.snakeValue }); }
-        else if (g === H.par - 1) { res.teamSkins[teamOf[p]] += rules.birdie;
+        else if (g === H.par - 1) { res.teamSkins[teamOf[p]] += rules.birdie; res.playerContrib[p] += rules.birdie;
           res.events.push({ hole: h, type: 'birdie', player: p, team: teamOf[p], value: rules.birdie }); }
       });
-      if (e.ferret && teamOf[e.ferret] !== undefined) { res.teamSkins[teamOf[e.ferret]] += rules.ferret;
+      if (e.ferret && teamOf[e.ferret] !== undefined) { res.teamSkins[teamOf[e.ferret]] += rules.ferret; res.playerContrib[e.ferret] += rules.ferret;
         res.events.push({ hole: h, type: 'ferret', player: e.ferret, team: teamOf[e.ferret], value: rules.ferret }); rec.ferret = e.ferret; }
 
       // snake: furthest first putt over 6ft holed, and the hole must be completed (no pick-up)
       if (e.snake && teamOf[e.snake] !== undefined) {
         if (gross[e.snake] === 'P') { rec.snakeInvalid = true; rec.notes.push('snake claimed on a pick-up — not valid'); }
-        else { rec.snakeWinner = e.snake; res.teamSkins[teamOf[e.snake]] += rec.snakeValue;
+        else { rec.snakeWinner = e.snake; res.teamSkins[teamOf[e.snake]] += rec.snakeValue; res.playerContrib[e.snake] += rec.snakeValue;
           res.events.push({ hole: h, type: 'snake', player: e.snake, team: teamOf[e.snake], value: rec.snakeValue }); pot.snake = 0; }
       }
 
       // longest drive / closest to pin: roll to the next hole of the same kind if not won
       if (rec.isLD) { pot.ld += rules.ld; rec.ldValue = pot.ld;
-        if (e.ld && teamOf[e.ld] !== undefined) { rec.ld = e.ld; res.teamSkins[teamOf[e.ld]] += pot.ld;
+        if (e.ld && teamOf[e.ld] !== undefined) { rec.ld = e.ld; res.teamSkins[teamOf[e.ld]] += pot.ld; res.playerContrib[e.ld] += pot.ld;
           res.events.push({ hole: h, type: 'ld', player: e.ld, team: teamOf[e.ld], value: pot.ld }); pot.ld = 0; } }
       if (rec.isCP) { pot.cp += rules.cp; rec.cpValue = pot.cp;
-        if (e.cp && teamOf[e.cp] !== undefined) { rec.cp = e.cp; res.teamSkins[teamOf[e.cp]] += pot.cp;
+        if (e.cp && teamOf[e.cp] !== undefined) { rec.cp = e.cp; res.teamSkins[teamOf[e.cp]] += pot.cp; res.playerContrib[e.cp] += pot.cp;
           res.events.push({ hole: h, type: 'cp', player: e.cp, team: teamOf[e.cp], value: pot.cp }); pot.cp = 0; } }
 
       rec.teamSkins = res.teamSkins.slice();
@@ -176,7 +179,7 @@
       if (R.locked && R.frozen && noHoles) {
         var F = R.frozen, z = { hole: 0, snake: 0, ld: 0, cp: 0 };
         var fGroups = R.groups.map(function (G, gi) { var fg = (F.groups && F.groups[gi]) || {};
-          return { id: G.id, teams: G.teams, teamSkins: fg.teamSkins || G.teams.map(function () { return 0; }), playerShare: fg.playerShare || {}, playerPts: fg.playerPts || {},
+          return { id: G.id, teams: G.teams, teamSkins: fg.teamSkins || G.teams.map(function () { return 0; }), playerShare: fg.playerShare || {}, playerPts: fg.playerPts || {}, playerContrib: fg.playerContrib || {},
                    events: [], holes: [], complete: true, lastPlayed: course.holes.length, gaps: [], unwon: fg.unwon || z, carried: fg.carried || z, carriedShare: fg.carried || z,
                    pots: { hole: 0, snake: 0, ld: 0, cp: 0 }, frozen: true }; });
         var fpp = F.perPlayer || {};
@@ -218,10 +221,10 @@
       var lad = allComplete ? ladder(ptsAll) : null;
       var perPlayer = {};
       T.players.forEach(function (p) {
-        var team = 0; groupsOut.forEach(function (g) { if (g.playerShare[p.id] !== undefined) team += g.playerShare[p.id]; });
+        var team = 0, contrib = 0; groupsOut.forEach(function (g) { if (g.playerShare[p.id] !== undefined) team += g.playerShare[p.id]; if (g.playerContrib && g.playerContrib[p.id] !== undefined) contrib += g.playerContrib[p.id]; });
         var l = lad && lad[p.id] ? lad[p.id].skins : 0;
         var played = groupsOut.some(function (g) { return g.playerPts[p.id] !== undefined && g.lastPlayed > 0; });
-        perPlayer[p.id] = { team: team, ladder: l, total: team + l, pts: ptsAll[p.id], played: played, hc: hcInfo[p.id] };
+        perPlayer[p.id] = { team: team, contrib: contrib, ladder: l, total: team + l, pts: ptsAll[p.id], played: played, hc: hcInfo[p.id] };
         if (played) { out.totals[p.id].team += team; out.totals[p.id].ladder += l; out.totals[p.id].total += team + l; }
         out.totals[p.id].byRound.push(played ? team + l : null);
       });

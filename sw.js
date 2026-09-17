@@ -1,6 +1,6 @@
 /* Mission Hills Skins — offline cache. Serve from cache instantly, refresh in the background;
    the next open picks up any update. Bump V on every deploy. */
-var V = 'mhs-2026-09-18e';
+var V = 'mhs-2026-09-18f';
 var ASSETS = ['./', './index.html', './engine.js', './courses.js', './qrcode.min.js', './jsqr.min.js', './manifest.webmanifest', './icon.svg'];
 self.addEventListener('install', function (e) {
   e.waitUntil(caches.open(V).then(function (c) { return c.addAll(ASSETS); }).then(function () { return self.skipWaiting(); }));
